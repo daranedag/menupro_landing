@@ -1,0 +1,103 @@
+---
+import "../styles/global.css";
+import Header from "../components/sections/Header.astro";
+import Footer from "../components/sections/Footer.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  ogType?: string;
+  schema?: object;
+  city?: string;
+  keywords?: string[];
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage = "/images/og-default.jpg",
+  ogType = "website",
+  schema,
+  city,
+  keywords = [],
+} = Astro.props;
+
+const siteUrl = "https://menupro.cl";
+const fullCanonical = canonical || `${siteUrl}${Astro.url.pathname}`;
+const fullOgImage = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
+---
+
+<!DOCTYPE html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- SEO Básico -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {keywords.length > 0 && <meta name="keywords" content={keywords.join(", ")} />}
+    
+    <!-- Canonical -->
+    <link rel="canonical" href={fullCanonical} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={fullCanonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={fullOgImage} />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:site_name" content="MenuPro" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={fullCanonical} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={fullOgImage} />
+
+    <!-- Geo Tags para SEO Local -->
+    {city && (
+      <>
+        <meta name="geo.region" content="CL" />
+        <meta name="geo.placename" content={city} />
+      </>
+    )}
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Schema.org JSON-LD -->
+    {schema && (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    )}
+
+    <!-- Dark Mode Script -->
+    <script is:inline>
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+
+    <slot name="head" />
+  </head>
+
+  <body class="bg-white text-gray-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+    <Header />
+    <slot />
+    <Footer />
+  </body>
+</html>

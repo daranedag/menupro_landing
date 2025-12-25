@@ -1,0 +1,112 @@
+---
+import SeoLayout from "../layouts/SeoLayout.astro";
+import Hero from "../components/sections/Hero.astro";
+import Problems from "../components/sections/Problems.astro";
+import Features from "../components/sections/Features.astro";
+import HowItWorks from "../components/sections/HowItWorks.astro";
+import Benefits from "../components/sections/Benefits.astro";
+import CTA from "../components/sections/CTA.astro";
+import FadeIn from "../components/ui/FadeIn.astro";
+
+const pageUrl = "https://menupro.cl/menu-digital-restaurantes";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "MenuPro",
+  "applicationCategory": "BusinessApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "CLP"
+  },
+  "description": "Plataforma para crear y gestionar menús digitales con código QR para restaurantes en Chile.",
+  "operatingSystem": "Web, iOS, Android",
+  "featureList": [
+    "Menú digital con código QR",
+    "Actualización en tiempo real",
+    "Sin comisiones por pedido",
+    "Diseño personalizable",
+    "Gestión de categorías y productos"
+  ]
+};
+---
+
+<SeoLayout
+  title="Menú Digital con QR para Restaurantes en Chile | MenuPro"
+  description="Crea y gestiona menús digitales profesionales para tu restaurante con código QR. Actualiza precios y platos en tiempo real, sin reimpresiones."
+  canonical={pageUrl}
+  keywords={[
+    "menú digital",
+    "carta digital restaurante",
+    "menú QR",
+    "menú digital Chile",
+    "carta QR restaurante"
+  ]}
+  schema={schema}
+>
+  <Hero
+    title="Menú Digital para Restaurantes"
+    subtitle="Moderniza tu restaurante con una carta digital profesional y fácil de actualizar"
+  />
+
+  <!-- Sección de Ciudades Disponibles -->
+  <section class="py-16 px-6 max-w-6xl mx-auto">
+    <FadeIn>
+      <div class="text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-semibold mb-4">
+          Disponible en toda Chile
+        </h2>
+        <p class="text-muted max-w-2xl mx-auto">
+          Ayudamos a restaurantes en todo el país a digitalizar sus cartas de manera simple y profesional.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Ciudad: Valdivia -->
+        <a 
+          href="/menu-digital-restaurantes-valdivia"
+          class="group p-6 rounded-2xl border border-default bg-[var(--color-bg)] hover:bg-[var(--color-bg-soft)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+        >
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-[var(--color-accent)] transition">
+            📍 Valdivia
+          </h3>
+          <p class="text-sm text-muted mb-4">
+            Región de Los Ríos
+          </p>
+          <p class="text-sm text-muted">
+            Menús digitales para restaurantes en Valdivia y alrededores.
+          </p>
+          <div class="mt-4 text-sm font-medium text-[var(--color-accent)] group-hover:underline">
+            Ver más →
+          </div>
+        </a>
+
+        <!-- Agregar más ciudades aquí siguiendo el mismo patrón -->
+        <div class="p-6 rounded-2xl border border-dashed border-default bg-[var(--color-bg)] opacity-60">
+          <h3 class="text-xl font-semibold mb-2">
+            📍 Próximamente
+          </h3>
+          <p class="text-sm text-muted">
+            Estamos expandiendo a más ciudades. Contáctanos si estás interesado.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-dashed border-default bg-[var(--color-bg)] opacity-60">
+          <h3 class="text-xl font-semibold mb-2">
+            📍 Tu ciudad
+          </h3>
+          <p class="text-sm text-muted">
+            ¿Tu ciudad no está en la lista? Escríbenos y la agregaremos.
+          </p>
+        </div>
+      </div>
+    </FadeIn>
+  </section>
+
+  <Problems />
+  <Features />
+  <HowItWorks />
+  <Benefits />
+  <CTA />
+</SeoLayout>

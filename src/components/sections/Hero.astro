@@ -1,5 +1,15 @@
 ---
 import FadeIn from "../ui/FadeIn.astro";
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+}
+
+const { 
+  title = "Tu carta digital, siempre actualizada",
+  subtitle = "Crea, edita y comparte el menú de tu restaurante en minutos. Sin reimprimir, sin depender de terceros."
+} = Astro.props;
 ---
 <section class="py-12 md:py-16 px-6 max-w-7xl mx-auto">
 
@@ -9,14 +19,12 @@ import FadeIn from "../ui/FadeIn.astro";
     <div>
         <FadeIn>
             <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-5">
-                Tu carta digital,<br />
-                siempre actualizada
+                {title}
             </h1>
         </FadeIn>
 
       <p class="text-base sm:text-lg text-muted max-w-xl mb-8">
-        Crea, edita y comparte el menú de tu restaurante en minutos.
-        Sin reimprimir, sin depender de terceros.
+        {subtitle}
       </p>
 
       <!-- CTAs -->

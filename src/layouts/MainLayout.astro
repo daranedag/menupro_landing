@@ -1,6 +1,20 @@
 ---
 import "../styles/global.css";
-const { title = "MenuPro", description = "Carta digital para restaurantes" } = Astro.props;
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+}
+
+const { 
+  title = "MenuPro", 
+  description = "Carta digital para restaurantes",
+  canonical
+} = Astro.props;
+
+const siteUrl = "https://menupro.cl";
+const fullCanonical = canonical || `${siteUrl}${Astro.url.pathname.replace(/\/$/, '')}`;
 ---
 
 <!DOCTYPE html>
@@ -10,6 +24,7 @@ const { title = "MenuPro", description = "Carta digital para restaurantes" } = A
         <meta name="viewport" content="width=device-width" />
         <title>{title}</title>
         <meta name="description" content={description} />
+        <link rel="canonical" href={fullCanonical} />
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link

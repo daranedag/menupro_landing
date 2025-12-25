@@ -1,0 +1,26 @@
+---
+const { delay = "0ms" } = Astro.props;
+---
+
+<div
+  class="opacity-0 translate-y-4 transition-all duration-700 ease-out will-change-transform"
+  style={`transition-delay:${delay}`}
+  data-animate
+>
+  <slot />
+</div>
+
+<script>
+  const observer = new IntersectionObserver(
+    entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove("opacity-0", "translate-y-4");
+        }
+      });
+    },
+    { threshold: 0.15 }
+  );
+
+  document.querySelectorAll("[data-animate]").forEach(el => observer.observe(el));
+</script>

@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================
+   Design tokens MenuPro
+========================== */
+
+:root {
+  --color-bg: #FFFFFF;
+  --color-bg-soft: #F6F7F5;
+  --color-text: #1A1A1A;
+  --color-text-muted: #6B7280;
+  --color-border: #E5E7EB;
+
+  --color-accent: #3F6B5B;
+  --color-accent-hover: #355C4F;
+  --color-accent-soft: #E6EFEC;
+}
+
+.dark {
+  --color-bg: #0F1211;
+  --color-bg-soft: #161A18;
+  --color-text: #E5E7EB;
+  --color-text-muted: #9CA3AF;
+  --color-border: #2A2F2D;
+}
+
+/* ==========================
+   Base styles
+========================== */
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================
+   Utilities
+========================== */
+
+.bg-soft {
+  background-color: var(--color-bg-soft);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.border-default {
+  border-color: var(--color-border);
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.problem-card {
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background-color: var(--color-bg);
+  transition: all 0.3s ease;
+}
+
+.problem-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.problem-icon {
+  font-size: 1.75rem;
+  display: inline-block;
+  margin-bottom: 0.75rem;
+}
+
+.problem-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.problem-text {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.step-card {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border-radius: 1.25rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.step-number {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  border-radius: 9999px;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.step-text {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}

@@ -1,0 +1,82 @@
+<section
+  id="demo"
+  class="py-12 md:py-16 px-6 bg-soft"
+>
+  <div class="max-w-3xl mx-auto">
+
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
+        Solicita una demo
+      </h2>
+      <p class="text-muted">
+        Déjanos tus datos y te contactamos para mostrarte MenuPro en acción.
+      </p>
+    </div>
+
+    <form
+      method="POST"
+      action="https://formspree.io/f/mwvejzrb"
+      class="bg-[var(--color-bg)] border border-default rounded-2xl p-6 md:p-8 space-y-6"
+    >
+
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          Nombre
+        </label>
+        <input
+          type="text"
+          name="name"
+          required
+          class="w-full rounded-lg border border-default px-4 py-3 bg-transparent"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          Restaurante
+        </label>
+        <input
+          type="text"
+          name="restaurant"
+          required
+          class="w-full rounded-lg border border-default px-4 py-3 bg-transparent"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          Email
+        </label>
+        <input
+          type="email"
+          name="email"
+          required
+          class="w-full rounded-lg border border-default px-4 py-3 bg-transparent"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          Mensaje (opcional)
+        </label>
+        <textarea
+          name="message"
+          rows="4"
+          class="w-full rounded-lg border border-default px-4 py-3 bg-transparent"
+          placeholder="Cuéntanos qué tipo de restaurante tienes"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary w-full py-3 rounded-lg font-medium transition"
+      >
+        Solicitar demo
+      </button>
+
+      <p class="text-xs text-muted text-center">
+        Te contactaremos dentro de las próximas 24 horas.
+      </p>
+    </form>
+  </div>
+</section>

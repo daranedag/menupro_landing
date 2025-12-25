@@ -1,0 +1,53 @@
+---
+import FadeIn from "../ui/FadeIn.astro";
+---
+<section class="py-12 md:py-16 px-6 max-w-7xl mx-auto">
+
+  <div class="flex flex-col gap-12 md:grid md:grid-cols-2 md:items-center md:gap-16">
+
+    <!-- Texto -->
+    <div>
+        <FadeIn>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-5">
+                Tu carta digital,<br />
+                siempre actualizada
+            </h1>
+        </FadeIn>
+
+      <p class="text-base sm:text-lg text-muted max-w-xl mb-8">
+        Crea, edita y comparte el menú de tu restaurante en minutos.
+        Sin reimprimir, sin depender de terceros.
+      </p>
+
+      <!-- CTAs -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a
+          href="/demo"
+          class="btn-primary text-center px-6 py-3 rounded-lg font-medium transition"
+        >
+          Solicitar demo
+        </a>
+
+        <a
+          href="#features"
+          class="text-center px-6 py-3 rounded-lg border border-default hover:bg-[var(--color-bg-soft)] transition"
+        >
+          Ver cómo funciona
+        </a>
+      </div>
+    </div>
+
+    <!-- Mockup -->
+    <div class="relative flex justify-center">
+      <div class="absolute inset-0 bg-[var(--color-accent-soft)] rounded-3xl blur-3xl opacity-60 -z-10"></div>
+
+      <img
+        src="/images/hero/menu-mockup.png"
+        alt="Carta digital MenuPro en celular"
+        class="w-[260px] sm:w-[300px] md:w-[340px] shadow-xl rounded-3xl"
+        loading="eager"
+      />
+    </div>
+
+  </div>
+</section>

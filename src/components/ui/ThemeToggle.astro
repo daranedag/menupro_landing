@@ -1,0 +1,30 @@
+<button
+  id="theme-toggle"
+  aria-label="Cambiar tema"
+  class="p-2 rounded-lg border border-default hover:bg-[var(--color-bg-soft)] transition"
+>
+  🌙
+</button>
+
+<script>
+    const button = document.getElementById("theme-toggle");
+    
+    if (!button) throw new Error("Theme toggle button not found");
+
+    const updateIcon = () => {
+        button.textContent = document.documentElement.classList.contains("dark")
+        ? "☀️"
+        : "🌙";
+    };
+
+    updateIcon();
+
+    button.addEventListener("click", () => {
+        document.documentElement.classList.toggle("dark");
+
+        const isDark = document.documentElement.classList.contains("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+
+        updateIcon();
+    });
+</script>

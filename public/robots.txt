@@ -1,0 +1,11 @@
+# robots.txt para MenuPro
+# Permitir acceso a todos los bots de búsqueda
+
+User-agent: *
+Allow: /
+
+# Bloquear acceso a plantillas y archivos internos
+Disallow: /_template-ciudad
+
+# Sitemap
+Sitemap: https://menupro.cl/sitemap-index.xml

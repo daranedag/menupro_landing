@@ -7,6 +7,7 @@ export interface CityData {
   localContext: string;
   neighborhoods?: string[];
   phone?: string;
+  ogImage?: string;
 }
 
 export const cities: Record<string, CityData> = {
@@ -30,33 +31,35 @@ export const cities: Record<string, CityData> = {
       "Isla Teja",
       "Niebla"
     ],
-    phone: "+56912345678" // Actualiza con tu número
+    phone: "+56967603803",
+    ogImage: "/images/og-valdivia.png"
   },
   
-  // Puedes agregar más ciudades fácilmente:
-  /*
   santiago: {
     name: "Santiago",
     slug: "santiago",
     region: "Región Metropolitana",
-    description: "Menú digital profesional para restaurantes en Santiago. Gestión simple de tu carta con código QR.",
+    description: "Menú digital profesional para restaurantes en Santiago. Actualiza tu carta con código QR en tiempo real, sin impresiones ni comisiones por pedido.",
     keywords: [
       "menú digital Santiago",
       "carta digital restaurante Santiago",
       "menú QR Santiago",
-      "carta restaurante Santiago Centro"
+      "carta restaurante Santiago Centro",
+      "menú digital Región Metropolitana"
     ],
-    localContext: "Santiago concentra la mayor oferta gastronómica del país. MenuPro facilita la gestión de cartas digitales para restaurantes de todos los tamaños.",
+    localContext: "Santiago concentra la mayor oferta gastronómica del país, desde restaurantes de alta cocina hasta picadas tradicionales. MenuPro ayuda a negocios de todos los tamaños a modernizar su servicio con cartas digitales simples y profesionales.",
     neighborhoods: [
       "Santiago Centro",
       "Providencia",
       "Las Condes",
       "Vitacura",
-      "Ñuñoa"
+      "Ñuñoa",
+      "La Reina",
+      "Bellavista"
     ],
-    phone: "+56912345678"
-  },
-  */
+    phone: "+56967603803",
+    ogImage: "/images/og-santiago.png"
+  }
 };
 
 // Helper para obtener datos de una ciudad

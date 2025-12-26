@@ -1,0 +1,76 @@
+---
+import SeoLayout from "../layouts/SeoLayout.astro";
+import FadeIn from "../components/ui/FadeIn.astro";
+
+// No definir canonical fijo, dejar que SeoLayout lo genere dinámicamente
+---
+
+<SeoLayout
+  title="Página no encontrada - 404 | MenuPro"
+  description="La página que buscas no existe o ha sido movida."
+>
+  <section class="pt-24 pb-20 px-6 max-w-4xl mx-auto min-h-[70vh] flex items-center justify-center">
+    <FadeIn>
+      <div class="text-center">
+        <!-- Número 404 grande -->
+        <div class="mb-8">
+          <span class="text-8xl md:text-9xl font-bold text-[var(--color-accent)] opacity-20">
+            404
+          </span>
+        </div>
+
+        <!-- Título -->
+        <div class="mb-6">
+          <h1 class="text-3xl md:text-4xl font-semibold mb-4">
+            Página no encontrada
+          </h1>
+        </div>
+
+        <!-- Mensaje -->
+        <p class="text-lg text-muted mb-8 max-w-xl mx-auto">
+          La página que buscas no existe o ha sido movida. 
+          Pero no te preocupes, podemos ayudarte a encontrar lo que necesitas.
+        </p>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a
+            href="/"
+            class="px-8 py-4 rounded-xl font-medium bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] transition"
+          >
+            Volver al inicio
+          </a>
+
+          <a
+            href="/contacto"
+            class="px-8 py-4 rounded-xl font-medium border border-default hover:bg-[var(--color-bg-soft)] transition"
+          >
+            Contactar soporte
+          </a>
+        </div>
+
+        <!-- Links útiles -->
+        <div class="mt-12 pt-8 border-t border-default">
+          <p class="text-sm text-muted mb-4">Páginas que podrían interesarte:</p>
+          <div class="flex flex-wrap justify-center gap-4 text-sm">
+            <a href="/menu-digital-restaurantes" class="text-[var(--color-accent)] hover:underline">
+              Menú Digital
+            </a>
+            <span class="text-muted">•</span>
+            <a href="/menu-digital-restaurantes-valdivia" class="text-[var(--color-accent)] hover:underline">
+              Valdivia
+            </a>
+            <span class="text-muted">•</span>
+            <a href="/quienes-somos" class="text-[var(--color-accent)] hover:underline">
+              Quiénes Somos
+            </a>
+            <span class="text-muted">•</span>
+            <a href="/contacto" class="text-[var(--color-accent)] hover:underline">
+              Contacto
+            </a>
+          </div>
+        </div>
+      </div>
+    </FadeIn>
+  </section>
+</SeoLayout>

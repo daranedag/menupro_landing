@@ -10,6 +10,7 @@ import HowItWorks from "../components/sections/HowItWorks.astro";
 import Benefits from "../components/sections/Benefits.astro";
 import CTA from "../components/sections/CTA.astro";
 import FadeIn from "../components/ui/FadeIn.astro";
+import Breadcrumbs from "../components/ui/Breadcrumbs.astro";
 
 import { 
   getCityData, 
@@ -18,7 +19,7 @@ import {
 } from "../data/cities";
 
 // 👇 PASO 1: Cambia el slug de la ciudad aquí
-const CITY_SLUG = "valdivia"; // Ej: "santiago", "concepcion", etc.
+const CITY_SLUG = "NOMBRE_CIUDAD"; // Ej: "santiago", "concepcion", "valparaiso", etc.
 
 const cityData = getCityData(CITY_SLUG);
 if (!cityData) {
@@ -51,7 +52,14 @@ const schemas = {
   city={cityData.name}
   schema={schemas}
   ogType="website"
+  ogImage={cityData.ogImage}
 >
+  <Breadcrumbs items={[
+    { label: "Inicio", href: "/" },
+    { label: "Menú Digital", href: "/menu-digital-restaurantes" },
+    { label: cityData.name }
+  ]} />
+  
   <Hero
     title={`Menú Digital para Restaurantes en ${cityData.name}`}
     subtitle="Crea y administra tu carta digital con QR de forma simple, sin reimpresiones ni terceros."
@@ -60,7 +68,7 @@ const schemas = {
   <!-- Sección Local Contextual -->
   <section class="py-16 px-6 max-w-5xl mx-auto">
     <FadeIn>
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-3xl p-8 md:p-12">
+      <div class="bg-[var(--color-bg-soft)] rounded-3xl p-8 md:p-12 border border-default">
         <h2 class="text-2xl md:text-3xl font-semibold mb-6 text-center">
           MenuPro para restaurantes en {cityData.name}
         </h2>

@@ -1,6 +1,6 @@
 <section
   id="demo"
-  class="py-12 md:py-16 px-6 bg-soft"
+  class="py-12 md:py-16 px-6 bg-[var(--color-bg-soft)]"
 >
   <div class="max-w-3xl mx-auto">
 
@@ -51,6 +51,18 @@
           type="email"
           name="email"
           required
+          class="w-full rounded-lg border border-default px-4 py-3 bg-transparent"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          WhatsApp <span class="text-xs text-muted">(opcional)</span>
+        </label>
+        <input
+          type="tel"
+          name="whatsapp"
+          placeholder="+56 9 1234 5678"
           class="w-full rounded-lg border border-default px-4 py-3 bg-transparent"
         />
       </div>

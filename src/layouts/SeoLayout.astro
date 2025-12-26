@@ -18,7 +18,7 @@ const {
   title,
   description,
   canonical,
-  ogImage = "/images/og-default.jpg",
+  ogImage = "/images/og-default.png",
   ogType = "website",
   schema,
   city,
@@ -31,7 +31,7 @@ const fullOgImage = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}
 ---
 
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -43,6 +43,15 @@ const fullOgImage = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}
     
     <!-- Canonical -->
     <link rel="canonical" href={fullCanonical} />
+    
+    <!-- Hreflang para SEO internacional -->
+    <link rel="alternate" hreflang="es-cl" href={fullCanonical} />
+    <link rel="alternate" hreflang="es" href={fullCanonical} />
+    <link rel="alternate" hreflang="x-default" href={fullCanonical} />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content={ogType} />
@@ -84,11 +93,14 @@ const fullOgImage = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}
     <!-- Dark Mode Script -->
     <script is:inline>
       const theme = localStorage.getItem("theme");
-      if (
-        theme === "dark" ||
-        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
-        document.documentElement.classList.add("dark");
+      const htmlElement = document.documentElement;
+      
+      if (theme === "light") {
+        htmlElement.classList.remove("dark");
+      } else if (theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        htmlElement.classList.add("dark");
+      } else if (!theme) {
+        htmlElement.classList.remove("dark");
       }
     </script>
 

@@ -1,7 +1,6 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 
-import Header from "../components/sections/Header.astro";
 import Hero from "../components/sections/Hero.astro";
 import SocialProof from "../components/sections/SocialProof.astro";
 import Problems from "../components/sections/Problems.astro";
@@ -9,18 +8,18 @@ import Features from "../components/sections/Features.astro";
 import HowItWorks from "../components/sections/HowItWorks.astro";
 import Benefits from "../components/sections/Benefits.astro";
 import CTA from "../components/sections/CTA.astro";
-import Footer from "../components/sections/Footer.astro";
-
 import ContactForm from "../components/sections/ContactForm.astro";
 ---
 
 <MainLayout
   title="MenuPro | Carta Digital para Restaurantes con QR"
-  description="Crea y gestiona la carta digital de tu restaurante con QR, sin impresiones y fácil de actualizar."
+  description="Crea y gestiona la carta digital de tu restaurante con QR. Actualiza precios en tiempo real sin impresiones. Simple, profesional y sin comisiones."
   canonical="https://menupro.cl"
 >
-  <Header />
-  <Hero />
+  <Hero 
+    primaryCtaUrl="#demo"
+    secondaryCtaUrl="#features"
+  />
   <SocialProof />
   <Problems />
   <Features />
@@ -28,5 +27,4 @@ import ContactForm from "../components/sections/ContactForm.astro";
   <HowItWorks />
   <Benefits />
   <CTA />
-  <Footer />
 </MainLayout>

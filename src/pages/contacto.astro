@@ -1,0 +1,296 @@
+---
+import SeoLayout from "../layouts/SeoLayout.astro";
+import FadeIn from "../components/ui/FadeIn.astro";
+
+const pageUrl = "https://menupro.cl/contacto";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "name": "Contacto - MenuPro",
+  "description": "Contáctanos para conocer cómo MenuPro puede ayudarte a gestionar la carta digital de tu restaurante.",
+  "url": pageUrl
+};
+---
+
+<SeoLayout
+  title="Contacto - Hablemos de tu Carta Digital | MenuPro"
+  description="Cuéntanos sobre tu restaurante y te mostramos cómo MenuPro puede ayudarte a simplificar la gestión de tu menú digital."
+  canonical={pageUrl}
+  keywords={[
+    "contacto menupro",
+    "demo menú digital",
+    "solicitar información",
+    "contacto carta digital",
+    "whatsapp menupro"
+  ]}
+  schema={schema}
+>
+  <!-- Hero -->
+  <section class="py-12 md:py-16 px-6 max-w-4xl mx-auto">
+    <FadeIn>
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-6">
+          Hablemos de tu carta digital
+        </h1>
+        <p class="text-lg md:text-xl text-muted leading-relaxed">
+          Cuéntanos sobre tu restaurante y te mostramos cómo MenuPro puede ayudarte 
+          a simplificar la gestión de tu menú.
+        </p>
+      </div>
+    </FadeIn>
+
+    <!-- Contenedor en dos columnas -->
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <!-- Formulario -->
+      <FadeIn>
+        <div class="bg-[var(--color-bg-soft)] rounded-3xl p-8 border border-default">
+          <h2 class="text-2xl font-semibold mb-6">Solicita una demo</h2>
+          
+          <form
+            action="https://formspree.io/f/mwvejzrb"
+            method="POST"
+            class="space-y-5"
+          >
+            <!-- Nombre -->
+            <div>
+              <label for="name" class="block text-sm font-medium mb-2">
+                Tu nombre
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                class="w-full px-4 py-3 rounded-xl border border-default bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition"
+                placeholder="Ej: María González"
+              />
+            </div>
+
+            <!-- Nombre del restaurante -->
+            <div>
+              <label for="restaurant" class="block text-sm font-medium mb-2">
+                Nombre del restaurante
+              </label>
+              <input
+                type="text"
+                id="restaurant"
+                name="restaurant"
+                required
+                class="w-full px-4 py-3 rounded-xl border border-default bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition"
+                placeholder="Ej: Café del Centro"
+              />
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label for="email" class="block text-sm font-medium mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                class="w-full px-4 py-3 rounded-xl border border-default bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition"
+                placeholder="tu@email.com"
+              />
+            </div>
+
+            <!-- Ciudad -->
+            <div>
+              <label for="city" class="block text-sm font-medium mb-2">
+                Ciudad
+              </label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                required
+                class="w-full px-4 py-3 rounded-xl border border-default bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition"
+                placeholder="Ej: Valdivia"
+              />
+            </div>
+
+            <!-- WhatsApp -->
+            <div>
+              <label for="whatsapp" class="block text-sm font-medium mb-2">
+                WhatsApp <span class="text-muted text-xs">(opcional)</span>
+              </label>
+              <input
+                type="tel"
+                id="whatsapp"
+                name="whatsapp"
+                class="w-full px-4 py-3 rounded-xl border border-default bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition"
+                placeholder="+56 9 1234 5678"
+              />
+            </div>
+
+            <!-- Mensaje opcional -->
+            <div>
+              <label for="message" class="block text-sm font-medium mb-2">
+                Mensaje <span class="text-muted text-xs">(opcional)</span>
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                rows="4"
+                class="w-full px-4 py-3 rounded-xl border border-default bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition resize-none"
+                placeholder="Cuéntanos brevemente sobre tu restaurante o lo que necesitas..."
+              ></textarea>
+            </div>
+
+            <!-- Botón submit -->
+            <button
+              type="submit"
+              class="w-full px-8 py-4 rounded-xl font-medium bg-[var(--color-accent)] text-white hover:opacity-90 transition"
+            >
+              Quiero ver MenuPro
+            </button>
+
+            <p class="text-xs text-muted text-center mt-4">
+              Respuesta en menos de 24 horas hábiles
+            </p>
+          </form>
+        </div>
+      </FadeIn>
+
+      <!-- Columna derecha: WhatsApp + Info -->
+      <div class="space-y-6">
+        <!-- WhatsApp directo -->
+        <FadeIn>
+          <div class="bg-[var(--color-bg-soft)] rounded-3xl p-8 border border-default">
+            <div class="text-center">
+              <div class="text-5xl mb-4">💬</div>
+              <h3 class="text-xl font-semibold mb-3">
+                ¿Prefieres hablar directo?
+              </h3>
+              <p class="text-muted mb-6">
+                Muchos restaurantes prefieren conversar por WhatsApp. 
+                Estamos disponibles para responder tus dudas.
+              </p>
+              <button
+                type="button"
+                id="whatsapp-direct-btn"
+                class="inline-block w-full px-8 py-4 rounded-xl font-medium bg-green-600 text-white hover:bg-green-700 transition"
+              >
+                Hablar por WhatsApp
+              </button>
+            </div>
+          </div>
+        </FadeIn>
+
+        <!-- Información de confianza -->
+        <FadeIn>
+          <div class="bg-[var(--color-bg-soft)] rounded-2xl p-6 border border-default">
+            <h3 class="font-semibold mb-4 flex items-center gap-2">
+              <span class="text-xl">✓</span>
+              Por qué confiar en MenuPro
+            </h3>
+            
+            <div class="space-y-3 text-sm">
+              <div class="flex items-start gap-3">
+                <span class="text-lg">🇨🇱</span>
+                <div>
+                  <p class="font-medium">Operamos en Chile</p>
+                  <p class="text-muted text-xs">
+                    Atendemos restaurantes en distintas ciudades del país
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="text-lg">👤</span>
+                <div>
+                  <p class="font-medium">Atención personalizada</p>
+                  <p class="text-muted text-xs">
+                    Te acompañamos durante todo el proceso
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="text-lg">⚡</span>
+                <div>
+                  <p class="font-medium">Respuesta rápida</p>
+                  <p class="text-muted text-xs">
+                    Respondemos generalmente el mismo día hábil
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </div>
+  </section>
+
+  <!-- Micro-FAQ -->
+  <section class="py-16 px-6 bg-[var(--color-bg-soft)]">
+    <div class="max-w-4xl mx-auto">
+      <FadeIn>
+        <h2 class="text-2xl md:text-3xl font-semibold mb-10 text-center">
+          Preguntas frecuentes
+        </h2>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- FAQ 1 -->
+          <div class="bg-[var(--color-bg)] rounded-2xl p-6 border border-default">
+            <h3 class="font-semibold mb-3">
+              ¿Tiene costo la demo?
+            </h3>
+            <p class="text-sm text-muted leading-relaxed">
+              No, la demo es sin costo y sin compromiso. Solo conversamos sobre tu restaurante.
+            </p>
+          </div>
+
+          <!-- FAQ 2 -->
+          <div class="bg-[var(--color-bg)] rounded-2xl p-6 border border-default">
+            <h3 class="font-semibold mb-3">
+              ¿Sirve para cualquier tipo de restaurante?
+            </h3>
+            <p class="text-sm text-muted leading-relaxed">
+              Sí, MenuPro se adapta a distintos formatos gastronómicos, desde cafés hasta restaurantes.
+            </p>
+          </div>
+
+          <!-- FAQ 3 -->
+          <div class="bg-[var(--color-bg)] rounded-2xl p-6 border border-default">
+            <h3 class="font-semibold mb-3">
+              ¿Necesito conocimientos técnicos?
+            </h3>
+            <p class="text-sm text-muted leading-relaxed">
+              No, nosotros te ayudamos a dejar tu carta lista y te enseñamos a gestionarla.
+            </p>
+          </div>
+        </div>
+      </FadeIn>
+    </div>
+  </section>
+
+  <!-- CTA final suave -->
+  <section class="py-16 px-6 max-w-2xl mx-auto text-center">
+    <FadeIn>
+      <p class="text-muted mb-4">
+        ¿Tienes alguna otra duda?
+      </p>
+      <a 
+        href="/quienes-somos" 
+        class="text-[var(--color-accent)] hover:underline font-medium"
+      >
+        Conoce más sobre MenuPro →
+      </a>
+    </FadeIn>
+  </section>
+</SeoLayout>
+
+<script>
+  // Botón de WhatsApp directo
+  const whatsappBtn = document.getElementById('whatsapp-direct-btn');
+  
+  whatsappBtn?.addEventListener('click', () => {
+    const message = 'Hola! Me interesa conocer MenuPro para mi restaurante.';
+    const whatsappUrl = `https://wa.me/56967603803?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  });
+</script>

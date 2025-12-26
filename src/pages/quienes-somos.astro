@@ -1,0 +1,242 @@
+---
+import SeoLayout from "../layouts/SeoLayout.astro";
+import FadeIn from "../components/ui/FadeIn.astro";
+
+const pageUrl = "https://menupro.cl/quienes-somos";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "Sobre MenuPro",
+  "description": "MenuPro simplifica la gestión de cartas digitales para restaurantes en Chile. Menús editables, profesionales y sin complicaciones.",
+  "url": pageUrl
+};
+---
+
+<SeoLayout
+  title="Sobre MenuPro - Cartas Digitales para Restaurantes | MenuPro"
+  description="MenuPro simplifica la gestión de cartas digitales para restaurantes en Chile. Menús editables, profesionales y sin complicaciones técnicas."
+  canonical={pageUrl}
+  keywords={[
+    "sobre menupro",
+    "equipo menupro",
+    "quienes somos",
+    "cartas digitales chile",
+    "menú digital restaurantes"
+  ]}
+  schema={schema}
+>
+  <!-- Hero -->
+  <section class="py-12 md:py-16 px-6 max-w-5xl mx-auto">
+    <FadeIn>
+      <div class="text-center max-w-3xl mx-auto">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight mb-6">
+          MenuPro: cartas digitales pensadas para restaurantes reales
+        </h1>
+        <p class="text-lg md:text-xl text-muted leading-relaxed">
+          MenuPro nace para simplificar la forma en que los restaurantes gestionan su carta.
+          Creamos menús digitales claros, editables y profesionales, pensados para el día a día 
+          de locales gastronómicos.
+        </p>
+      </div>
+    </FadeIn>
+  </section>
+
+  <!-- Por qué existe MenuPro -->
+  <section class="py-16 px-6 bg-[var(--color-bg-soft)]">
+    <div class="max-w-4xl mx-auto">
+      <FadeIn>
+        <h2 class="text-3xl md:text-4xl font-semibold mb-6 text-center">
+          Por qué existe MenuPro
+        </h2>
+        
+        <div class="prose prose-lg dark:prose-invert mx-auto">
+          <p class="text-muted text-lg leading-relaxed mb-4">
+            Muchos restaurantes siguen dependiendo de cartas impresas, PDFs desactualizados 
+            o soluciones poco claras. Cambiar precios, corregir errores o adaptar la carta 
+            a la temporada suele ser lento, caro y frustrante.
+          </p>
+          
+          <p class="text-lg leading-relaxed font-medium">
+            MenuPro existe para devolver el control al restaurante, sin complicaciones técnicas.
+          </p>
+        </div>
+      </FadeIn>
+    </div>
+  </section>
+
+  <!-- Pensado para -->
+  <section class="py-16 px-6 max-w-6xl mx-auto">
+    <FadeIn>
+      <h2 class="text-3xl md:text-4xl font-semibold mb-12 text-center">
+        Pensado para
+      </h2>
+
+      <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div class="flex items-start gap-4 p-6 rounded-2xl border border-default bg-[var(--color-bg)] hover:bg-[var(--color-bg-soft)] transition">
+          <span class="text-3xl">🍽️</span>
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Restaurantes independientes</h3>
+            <p class="text-muted text-sm">
+              Locales con identidad propia que buscan profesionalizar su carta sin perder autenticidad.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-6 rounded-2xl border border-default bg-[var(--color-bg)] hover:bg-[var(--color-bg-soft)] transition">
+          <span class="text-3xl">☕</span>
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Cafeterías y bistrós</h3>
+            <p class="text-muted text-sm">
+              Espacios modernos que necesitan actualizar su oferta con frecuencia y rapidez.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-6 rounded-2xl border border-default bg-[var(--color-bg)] hover:bg-[var(--color-bg-soft)] transition">
+          <span class="text-3xl">🍺</span>
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Cervecerías y foodtrucks</h3>
+            <p class="text-muted text-sm">
+              Negocios dinámicos con ofertas cambiantes que requieren flexibilidad constante.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 p-6 rounded-2xl border border-default bg-[var(--color-bg)] hover:bg-[var(--color-bg-soft)] transition">
+          <span class="text-3xl">✨</span>
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Locales que quieren verse profesionales</h3>
+            <p class="text-muted text-sm">
+              Sin perder tiempo en diseño o impresiones, mantén tu carta siempre actualizada.
+            </p>
+          </div>
+        </div>
+      </div>
+    </FadeIn>
+  </section>
+
+  <!-- Cómo trabajamos -->
+  <section class="py-16 px-6 bg-[var(--color-bg-soft)]">
+    <div class="max-w-4xl mx-auto">
+      <FadeIn>
+        <h2 class="text-3xl md:text-4xl font-semibold mb-6 text-center">
+          Cómo trabajamos
+        </h2>
+
+        <div class="prose prose-lg dark:prose-invert mx-auto text-center">
+          <p class="text-muted text-lg leading-relaxed mb-4">
+            No creemos en soluciones genéricas.<br>
+            Acompañamos a cada restaurante para dejar su carta digital clara, ordenada 
+            y lista para sus clientes.
+          </p>
+
+          <p class="text-lg leading-relaxed font-medium">
+            MenuPro combina tecnología simple con una experiencia pensada desde 
+            la operación real del restaurante.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mt-12">
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--color-accent)] text-white flex items-center justify-center text-2xl font-bold">
+              1
+            </div>
+            <h3 class="font-semibold mb-2">Conversamos</h3>
+            <p class="text-sm text-muted">
+              Entendemos tu negocio, tu carta actual y lo que necesitas.
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--color-accent)] text-white flex items-center justify-center text-2xl font-bold">
+              2
+            </div>
+            <h3 class="font-semibold mb-2">Implementamos</h3>
+            <p class="text-sm text-muted">
+              Creamos tu menú digital con tu identidad y estructura.
+            </p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--color-accent)] text-white flex items-center justify-center text-2xl font-bold">
+              3
+            </div>
+            <h3 class="font-semibold mb-2">Acompañamos</h3>
+            <p class="text-sm text-muted">
+              Te enseñamos a gestionar y actualizar tu carta de forma autónoma.
+            </p>
+          </div>
+        </div>
+      </FadeIn>
+    </div>
+  </section>
+
+  <!-- Dónde estamos -->
+  <section class="py-16 px-6 max-w-4xl mx-auto">
+    <FadeIn>
+      <div class="text-center">
+        <h2 class="text-3xl md:text-4xl font-semibold mb-6">
+          Dónde estamos
+        </h2>
+
+        <div class="bg-[var(--color-bg-soft)] rounded-3xl p-8 md:p-12 border border-default">
+          <p class="text-lg md:text-xl text-muted leading-relaxed mb-6">
+            MenuPro opera en <strong>Chile</strong> y está enfocado en restaurantes 
+            de distintas ciudades del país.
+          </p>
+
+          <p class="text-lg leading-relaxed mb-8">
+            Atendemos de forma remota y acompañamos a cada cliente durante la implementación.
+          </p>
+
+          <div class="flex flex-wrap justify-center gap-3 text-sm">
+            <a 
+              href="/menu-digital-restaurantes-valdivia"
+              class="px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-default hover:bg-[var(--color-bg-soft)] transition"
+            >
+              📍 Valdivia
+            </a>
+            <span class="px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-default opacity-60">
+              📍 Santiago (próximamente)
+            </span>
+            <span class="px-4 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-default opacity-60">
+              📍 Más ciudades en camino
+            </span>
+          </div>
+        </div>
+      </div>
+    </FadeIn>
+  </section>
+
+  <!-- CTA suave -->
+  <section class="py-16 md:py-20 px-6 max-w-3xl mx-auto">
+    <FadeIn>
+      <div class="text-center bg-[var(--color-bg-soft)] rounded-3xl p-8 md:p-12 border border-default">
+        <h2 class="text-2xl md:text-3xl font-semibold mb-4">
+          ¿Quieres saber si MenuPro es adecuado para tu restaurante?
+        </h2>
+
+        <p class="text-muted mb-8">
+          Conversemos sin compromiso sobre tu carta y cómo podríamos ayudarte.
+        </p>
+
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <a
+            href="https://wa.me/56967603803"
+            class="px-8 py-4 rounded-xl font-medium bg-[var(--color-accent)] text-white hover:opacity-90 transition"
+          >
+            Hablar con nosotros
+          </a>
+
+          <a
+            href="/contacto"
+            class="px-8 py-4 rounded-xl font-medium border border-default hover:bg-[var(--color-bg)] transition"
+          >
+            Solicitar demo
+          </a>
+        </div>
+      </div>
+    </FadeIn>
+  </section>
+</SeoLayout>

@@ -14,7 +14,7 @@ import {
   generateBreadcrumbSchema 
 } from "../data/cities";
 
-const cityData = getCityData("valdivia");
+const cityData = getCityData("santiago");
 if (!cityData) {
   return Astro.redirect("/404");
 }
@@ -55,7 +55,7 @@ const schemas = {
   
   <Hero
     title={`Menú Digital para Restaurantes en ${cityData.name}`}
-    subtitle="Crea y administra tu carta digital con QR de forma simple, sin reimpresiones ni terceros."
+    subtitle="Moderniza tu restaurante en la capital con una carta digital profesional. Actualiza precios en tiempo real sin complicaciones."
   />
 
   <!-- Sección Local Contextual -->
@@ -75,45 +75,44 @@ const schemas = {
             <div class="bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm">
               <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span class="text-2xl">🍽️</span>
-                Ideal para tu restaurante
+                Para todo tipo de local
               </h3>
               <p class="text-sm text-muted">
-                Ya sea que tengas un restaurant en el centro de {cityData.name}, 
-                una picada familiar o un café con vista al río, MenuPro se adapta 
-                a tu negocio. Sin complicaciones técnicas.
+                Desde restaurantes de alta cocina en Las Condes hasta picadas tradicionales 
+                en Santiago Centro. MenuPro se adapta a tu negocio sin importar el tamaño.
               </p>
             </div>
 
             <div class="bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm">
               <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span class="text-2xl">📱</span>
-                Actualización en tiempo real
+                Actualización instantánea
               </h3>
               <p class="text-sm text-muted">
                 Cambia precios, agrega platos del día o actualiza disponibilidad 
-                desde cualquier lugar. Tus clientes siempre verán la carta más reciente.
+                desde cualquier lugar de la ciudad. Todo en tiempo real.
               </p>
             </div>
 
             <div class="bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm">
               <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span class="text-2xl">💰</span>
-                Sin costos ocultos
+                Sin comisiones ocultas
               </h3>
               <p class="text-sm text-muted">
-                Un solo pago mensual fijo. No hay comisiones por pedido, 
-                ni sorpresas en la boleta. Transparencia total.
+                Pago mensual fijo y transparente. Sin comisiones por pedido, 
+                sin sorpresas. Ideal para el ritmo de Santiago.
               </p>
             </div>
 
             <div class="bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm">
               <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
-                <span class="text-2xl">🎯</span>
-                Soporte local
+                <span class="text-2xl">🚀</span>
+                Implementación rápida
               </h3>
               <p class="text-sm text-muted">
-                Atención en español, horarios compatibles con Chile, 
-                y entendimiento real de cómo funciona la gastronomía local.
+                Tu menú digital funcionando en minutos. Sin instalaciones 
+                complejas, sin capacitaciones largas. Simple y directo.
               </p>
             </div>
           </div>
@@ -121,7 +120,7 @@ const schemas = {
           {cityData.neighborhoods && cityData.neighborhoods.length > 0 && (
             <div class="mt-8 text-center">
               <p class="text-sm text-muted">
-                <strong>Atendemos todo {cityData.name}:</strong> {cityData.neighborhoods.join(", ")}
+                <strong>Atendemos toda la Región Metropolitana:</strong> {cityData.neighborhoods.join(", ")}, y más
               </p>
             </div>
           )}

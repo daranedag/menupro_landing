@@ -1,3 +1,105 @@
-<footer class="py-8 px-6 text-center text-muted text-sm">
-  © {new Date().getFullYear()} MenuPro. Todos los derechos reservados.
+<footer class="border-t border-default bg-[var(--color-bg-soft)]">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <!-- Grid principal -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      
+      <!-- Columna 1: Brand -->
+      <div>
+        <a href="/" class="font-semibold text-lg hover:text-[var(--color-accent)] transition block mb-3">
+          MenuPro
+        </a>
+        <p class="text-sm text-muted mb-4">
+          Carta digital para restaurantes. Simple, profesional y siempre actualizada.
+        </p>
+        <!-- WhatsApp -->
+        <a 
+          href="https://wa.me/56967603803" 
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 text-sm text-muted hover:text-[var(--color-accent)] transition"
+        >
+          <span class="text-lg">💬</span>
+          Escríbenos
+        </a>
+      </div>
+
+      <!-- Columna 2: Navegación -->
+      <div>
+        <h3 class="font-semibold mb-3">Navegación</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/" class="text-muted hover:text-[var(--color-accent)] transition">
+              Inicio
+            </a>
+          </li>
+          <li>
+            <a href="/quienes-somos" class="text-muted hover:text-[var(--color-accent)] transition">
+              Quiénes Somos
+            </a>
+          </li>
+          <li>
+            <a href="/contacto" class="text-muted hover:text-[var(--color-accent)] transition">
+              Contacto
+            </a>
+          </li>
+          <li>
+            <a href="/menu-digital-restaurantes" class="text-muted hover:text-[var(--color-accent)] transition">
+              Menú Digital
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Columna 3: Ciudades -->
+      <div>
+        <h3 class="font-semibold mb-3">Ciudades</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/menu-digital-restaurantes-santiago" class="text-muted hover:text-[var(--color-accent)] transition">
+              Santiago
+            </a>
+          </li>
+          <li>
+            <a href="/menu-digital-restaurantes-valdivia" class="text-muted hover:text-[var(--color-accent)] transition">
+              Valdivia
+            </a>
+          </li>
+          <li>
+            <a href="/menu-digital-restaurantes" class="text-muted hover:text-[var(--color-accent)] transition font-medium">
+              Ver todas →
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Columna 4: Legal (opcional) -->
+      <div>
+        <h3 class="font-semibold mb-3">Legal</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/terminos" class="text-muted hover:text-[var(--color-accent)] transition">
+              Términos de Uso
+            </a>
+          </li>
+          <li>
+            <a href="/privacidad" class="text-muted hover:text-[var(--color-accent)] transition">
+              Política de Privacidad
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Separador -->
+    <div class="border-t border-default pt-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted">
+        <p>
+          © {new Date().getFullYear()} MenuPro. Todos los derechos reservados.
+        </p>
+        <p class="text-xs">
+          Hecho con ❤️ en Chile
+        </p>
+      </div>
+    </div>
+  </div>
 </footer>

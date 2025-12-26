@@ -1,8 +1,84 @@
 ---
 import ThemeToggle from "../ui/ThemeToggle.astro";
+
+const currentPath = Astro.url.pathname;
 ---
 
 <header class="flex justify-between items-center px-6 py-6 max-w-7xl mx-auto">
-  <span class="font-semibold text-lg">MenuPro</span>
-  <ThemeToggle />
+  <!-- Logo -->
+  <a href="/" class="font-semibold text-lg hover:text-[var(--color-accent)] transition">
+    MenuPro
+  </a>
+
+  <!-- Navegación Desktop -->
+  <nav class="hidden md:flex items-center gap-6">
+    <a 
+      href="/" 
+      class={`text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/' ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]' : ''}`}
+    >
+      Inicio
+    </a>
+    <a 
+      href="/quienes-somos" 
+      class={`text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/quienes-somos' ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]' : ''}`}
+    >
+      Quiénes Somos
+    </a>
+    <a 
+      href="/contacto" 
+      class={`text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/contacto' ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]' : ''}`}
+    >
+      Contacto
+    </a>
+    <ThemeToggle />
+  </nav>
+
+  <!-- Navegación Mobile -->
+  <div class="md:hidden flex items-center gap-4">
+    <ThemeToggle />
+    <button id="mobile-menu-btn" class="text-2xl hover:text-[var(--color-accent)] transition" aria-label="Menú">
+      ☰
+    </button>
+  </div>
 </header>
+
+<!-- Menú Mobile -->
+<div id="mobile-menu" class="hidden md:hidden bg-[var(--color-bg-soft)] border-b border-default">
+  <nav class="max-w-7xl mx-auto px-6 py-4">
+    <ul class="space-y-3">
+      <li>
+        <a 
+          href="/" 
+          class={`block text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/' ? 'text-[var(--color-accent)]' : ''}`}
+        >
+          Inicio
+        </a>
+      </li>
+      <li>
+        <a 
+          href="/quienes-somos" 
+          class={`block text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/quienes-somos' ? 'text-[var(--color-accent)]' : ''}`}
+        >
+          Quiénes Somos
+        </a>
+      </li>
+      <li>
+        <a 
+          href="/contacto" 
+          class={`block text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/contacto' ? 'text-[var(--color-accent)]' : ''}`}
+        >
+          Contacto
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<script>
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  mobileMenuBtn?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+  });
+</script>

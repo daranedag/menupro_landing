@@ -1,0 +1,113 @@
+---
+import "../../styles/global.css";
+import ThemeToggle from "../../components/ui/ThemeToggle.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+}
+
+const {
+  title = "MenuPro | Panel",
+  description = "Panel para gestionar cartas y menús.",
+  canonical,
+  ogImage = "/images/og-default.png",
+} = Astro.props;
+
+const siteUrl = "https://menupro.cl";
+const fullCanonical = canonical || `${siteUrl}${Astro.url.pathname}`;
+const fullOgImage = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000";
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={fullCanonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={fullCanonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={fullOgImage} />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script is:inline>
+      const theme = localStorage.getItem("theme");
+      const htmlElement = document.documentElement;
+
+      if (theme === "light") {
+        htmlElement.classList.remove("dark");
+      } else if (theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        htmlElement.classList.add("dark");
+      } else if (!theme) {
+        htmlElement.classList.remove("dark");
+      }
+    </script>
+  <body class="bg-soft text-gray-900 antialiased dark:bg-neutral-950 dark:text-neutral-100 min-h-screen" data-api-base={apiBaseUrl}>
+    <header class="border-b border-default bg-white/70 dark:bg-neutral-900/70 backdrop-blur">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+        <a href="/app/dashboard" class="text-lg font-semibold tracking-tight hover:text-[var(--color-accent)]">
+          MenuPro Panel
+        </a>
+        <nav class="flex items-center gap-4 text-sm">
+          <a class="hover:text-[var(--color-accent)] font-medium" href="/app/dashboard">Dashboard</a>
+          <a class="hover:text-[var(--color-accent)]" href="/app/menus">Cartas</a>
+          <a class="hover:text-[var(--color-accent)]" href="/app/settings">Configuración</a>
+          <ThemeToggle />
+          <button id="app-logout" class="px-3 py-1 rounded-lg border border-default hover:bg-[var(--color-bg-soft)] text-sm font-medium">
+            Cerrar sesión
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<script is:inline>
+  const bodyEl = document.body;
+  const rawBase = bodyEl?.dataset?.apiBase || 'http://localhost:3000';
+  const trimmedBase = rawBase.replace(/\/$/, '');
+  const apiBase = trimmedBase.includes('/api') ? trimmedBase : `${trimmedBase}/api`;
+  const logoutBtn = document.getElementById('app-logout');
+  logoutBtn?.addEventListener('click', async () => {
+    const refreshToken = localStorage.getItem('supabase_refresh_token');
+    try {
+      await fetch(`${apiBase}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken || '' }),
+      }).catch(() => {});
+    } finally {
+      localStorage.removeItem('supabase_token');
+      localStorage.removeItem('supabase_refresh_token');
+      localStorage.removeItem('restaurant_id');
+      localStorage.removeItem('restaurant_slug');
+      localStorage.removeItem('restaurant_name');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_tier');
+      localStorage.removeItem('tier_limits');
+      window.location.href = '/app/login';
+    }
+  });
+</script>

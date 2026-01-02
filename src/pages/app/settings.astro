@@ -1,0 +1,422 @@
+---
+import PrivateLayout from "../../app/layouts/PrivateLayout.astro";
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000";
+export const prerender = false;
+---
+
+<PrivateLayout title="Configuración | MenuPro" description="Completa los datos de tu cuenta y restaurante.">
+  <section id="settings-root" class="max-w-3xl mx-auto space-y-6" data-api-base={apiBaseUrl}>
+    <div class="space-y-2">
+      <p class="text-sm text-muted">Paso inicial</p>
+      <h1 class="text-3xl font-semibold">Configura tu cuenta</h1>
+      <p class="text-sm text-muted">Guarda tu nombre y el de tu restaurante para continuar.</p>
+    </div>
+
+    <div id="settings-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+
+    <form id="settings-form" class="space-y-4 bg-white dark:bg-neutral-900 border border-default rounded-2xl shadow-sm p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Tu nombre
+          <input
+            id="user-name"
+            name="userName"
+            type="text"
+            required
+            autocomplete="name"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="Ej: Ana de MenuPro"
+          />
+        </label>
+
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Nombre del restaurante
+          <input
+            id="restaurant-name"
+            name="restaurantName"
+            type="text"
+            required
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="Ej: Cafe Central"
+          />
+        </label>
+      </div>
+
+      <div class="flex items-center space-between gap-3">
+        <button type="submit" class="btn-primary px-4 py-2 rounded-lg font-semibold transition">Guardar y continuar</button>
+        <span class="relative group inline-flex items-center justify-center h-6 w-6 rounded-full border border-default text-xs cursor-help">
+          i
+          <span class="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-lg border border-default bg-white p-3 text-[12px] text-gray-800 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity dark:bg-neutral-900 dark:text-neutral-100">
+            Usamos tu nombre para personalizar el panel y el del restaurante para crear tu espacio de trabajo. Una vez guardados, quedan bloqueados para mantener consistencia. Si necesitas cambios, contáctanos.
+          </span>
+        </span>
+      </div>
+      <p id="settings-status" class="text-sm text-muted"></p>
+    </form>
+
+
+    <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm text-muted">Tu plan actual</p>
+          <h2 id="current-tier-name" class="text-2xl font-semibold">Free</h2>
+          <p id="current-tier-tagline" class="text-sm text-muted">Incluye las funciones base para comenzar.</p>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+          Activo
+        </span>
+      </div>
+      <ul id="current-tier-benefits" class="mt-2 space-y-2 text-sm text-muted"></ul>
+      <div class="rounded-lg border border-dashed border-default px-3 py-2 text-sm text-muted flex items-center justify-between">
+        <span>Restaurantes permitidos</span>
+        <span id="restaurants-limit" class="font-semibold text-gray-900 dark:text-neutral-50">--</span>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <div>
+        <p class="text-sm text-muted">Mejoras disponibles</p>
+        <h3 class="text-xl font-semibold">Planes que puedes activar</h3>
+      </div>
+      <div id="upgrade-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+  </section>
+</PrivateLayout>
+
+<script is:inline>
+(function() {
+  const root = document.getElementById('settings-root');
+  const form = document.getElementById('settings-form');
+  const alertEl = document.getElementById('settings-alert');
+  const statusEl = document.getElementById('settings-status');
+  const userNameInput = document.getElementById('user-name');
+  const restaurantNameInput = document.getElementById('restaurant-name');
+  const currentTierNameEl = document.getElementById('current-tier-name');
+  const currentTierTaglineEl = document.getElementById('current-tier-tagline');
+  const currentTierBenefitsEl = document.getElementById('current-tier-benefits');
+  const upgradeCardsEl = document.getElementById('upgrade-cards');
+  const restaurantsLimitEl = document.getElementById('restaurants-limit');
+
+  const settingsRawBase = (root && root instanceof HTMLElement && root.dataset?.apiBase)
+    ? root.dataset.apiBase
+    : 'http://localhost:3000';
+  const settingsTrimmedBase = settingsRawBase.replace(/\/$/, '');
+  const apiBase = settingsTrimmedBase.includes('/api') ? settingsTrimmedBase : `${settingsTrimmedBase}/api`;
+
+  const supabaseToken = localStorage.getItem('supabase_token');
+  const storedRestaurantId = localStorage.getItem('restaurant_id') || '';
+  const storedRestaurantName = localStorage.getItem('restaurant_name') || '';
+  const storedUserName = localStorage.getItem('user_name') || '';
+  const storedUserTier = normalizeTierKey(localStorage.getItem('user_tier') || 'free');
+
+  const defaultTierInfo = {
+    free: {
+      label: 'Free',
+      tagline: 'Funciones base para probar MenuPro.',
+      benefits: ['1 carta activa', 'Hasta 10 platos', 'Generador QR básico', 'Soporte por correo'],
+    },
+    basico: {
+      label: 'Básico',
+      tagline: 'Para restaurantes que ya venden con QR.',
+      benefits: ['Cartas ilimitadas', 'Secciones y platos ilimitados', 'Branding básico', 'Soporte prioritario por correo'],
+    },
+    pro: {
+      label: 'Pro',
+      tagline: 'Para operar con más volumen y personal.',
+      benefits: ['Cartas y platos ilimitados', 'Variantes y precios dinámicos', 'QR personalizados', 'Soporte por WhatsApp'],
+    },
+    pro_plus: {
+      label: 'Pro+',
+      tagline: 'Acompañamiento dedicado y prioridad total.',
+      benefits: ['Todo Pro', 'Onboarding asistido', 'Reportes y optimización', 'Soporte dedicado'],
+    },
+  };
+
+  let tierInfo = { ...defaultTierInfo };
+  let tierLimits = { maxMenus: Infinity, maxRestaurants: Infinity };
+
+  function normalizeTierKey(key) {
+    const raw = (key || '').toString().trim().toLowerCase();
+    const cleaned = raw.replace(/\s+/g, '_').replace(/\+/g, '_').replace(/-/g, '_');
+    if (cleaned === 'basic') return 'basico';
+    if (cleaned === 'basico') return 'basico';
+    if (cleaned === 'pro') return 'pro';
+    if (cleaned === 'pro_plus' || cleaned === 'proplus' || cleaned === 'pro__') return 'pro_plus';
+    if (cleaned === 'free') return 'free';
+    return cleaned || 'free';
+  }
+
+  const whatsappUrl = 'https://wa.me/56967603803?text=Quiero%20hablar%20sobre%20MenuPro%20Pro%2B';
+
+  if (userNameInput && storedUserName) {
+    userNameInput.value = storedUserName;
+  }
+  if (restaurantNameInput && storedRestaurantName) {
+    restaurantNameInput.value = storedRestaurantName;
+  }
+
+  const inputsLocked = Boolean(storedUserName && storedRestaurantName);
+  if (inputsLocked) {
+    userNameInput?.setAttribute('disabled', 'true');
+    restaurantNameInput?.setAttribute('disabled', 'true');
+    form?.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
+    statusEl.textContent = 'Datos ya guardados. Si necesitas cambios contáctanos.';
+  }
+
+  if (!supabaseToken) {
+    showAlert('No hay sesión activa. Ingresa nuevamente.');
+    statusEl.textContent = 'Sesión requerida.';
+    setTimeout(() => (window.location.href = '/app/login'), 1200);
+  }
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!(form instanceof HTMLFormElement) || !statusEl || !userNameInput || !restaurantNameInput) return;
+
+    if (userNameInput.disabled || restaurantNameInput.disabled) {
+      statusEl.textContent = 'Los datos ya están bloqueados. Si necesitas editar, contáctanos.';
+      return;
+    }
+
+    const userName = userNameInput.value.trim();
+    const restaurantName = restaurantNameInput.value.trim();
+
+    if (!userName || !restaurantName) {
+      showAlert('Completa tu nombre y el del restaurante.');
+      statusEl.textContent = 'Faltan datos.';
+      statusEl.classList.add('text-red-500');
+      return;
+    }
+
+    statusEl.classList.remove('text-red-500');
+    statusEl.textContent = 'Guardando...';
+
+    const token = localStorage.getItem('supabase_token');
+    if (!token) {
+      showAlert('Tu sesión expiró. Inicia sesión nuevamente.');
+      statusEl.textContent = 'Sesión requerida.';
+      setTimeout(() => (window.location.href = '/app/login'), 1200);
+      return;
+    }
+
+    try {
+      statusEl.textContent = 'Guardando restaurante...';
+
+      const restaurantRes = await fetch(`${apiBase}/restaurants`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: restaurantName }),
+      });
+
+      const restaurantPayload = await restaurantRes.json().catch(() => ({}));
+      if (!restaurantRes.ok) {
+        throw new Error(restaurantPayload?.message || 'No se pudo crear el restaurante');
+      }
+
+      const restaurant = restaurantPayload?.restaurant || restaurantPayload?.data?.restaurant || restaurantPayload?.data || restaurantPayload;
+      const newRestaurantId = restaurant?.id || storedRestaurantId;
+      const newRestaurantSlug = restaurant?.slug || localStorage.getItem('restaurant_slug') || '';
+      const newRestaurantName = restaurant?.name || restaurantName;
+
+      if (newRestaurantId) localStorage.setItem('restaurant_id', newRestaurantId);
+      if (newRestaurantSlug) localStorage.setItem('restaurant_slug', newRestaurantSlug);
+      if (newRestaurantName) localStorage.setItem('restaurant_name', newRestaurantName);
+
+      statusEl.textContent = 'Guardando tu perfil...';
+
+      const profileRes = await fetch(`${apiBase}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: userName }),
+      });
+
+      const profilePayload = await profileRes.json().catch(() => ({}));
+      if (!profileRes.ok) {
+        throw new Error(profilePayload?.message || 'No se pudo guardar el perfil');
+      }
+
+      const savedName = profilePayload?.name || profilePayload?.data?.name || profilePayload?.user?.name || userName;
+      if (savedName) localStorage.setItem('user_name', savedName);
+
+      // Persist tier if backend lo devuelve en el perfil
+      const profileTier = profilePayload?.user_subscription || profilePayload?.tier;
+      if (profileTier) {
+        localStorage.setItem('user_tier', String(profileTier).toLowerCase());
+      }
+
+      statusEl.textContent = 'Guardado. Redirigiendo al dashboard...';
+      showAlert('');
+      setTimeout(() => (window.location.href = '/app/dashboard'), 800);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al guardar';
+      showAlert(message);
+      statusEl.textContent = message;
+      statusEl.classList.add('text-red-500');
+    }
+  });
+
+  function showAlert(message) {
+    if (!alertEl) return;
+    if (!message) {
+      alertEl.classList.add('hidden');
+      alertEl.textContent = '';
+      return;
+    }
+    alertEl.textContent = message;
+    alertEl.classList.remove('hidden');
+  }
+
+  function renderCurrentTier(tierKey) {
+    const tier = tierInfo[tierKey] || tierInfo.free;
+    if (currentTierNameEl) currentTierNameEl.textContent = tier.label;
+    if (currentTierTaglineEl) currentTierTaglineEl.textContent = tier.tagline;
+    if (currentTierBenefitsEl) {
+      currentTierBenefitsEl.innerHTML = tier.benefits
+        .map((item) => `<li class="flex items-start gap-2"><span class="mt-[6px] h-2 w-2 rounded-full bg-[var(--color-accent)]"></span><span>${item}</span></li>`)
+        .join('');
+    }
+  }
+
+  function deriveLimits(tierKey) {
+    const tier = tierInfo[tierKey] || tierInfo.free;
+    const features = tier?.benefits || [];
+    // Heurística simple: si incluye "1 Carta" o feature_key one_menu => 1, idem restaurante
+    const hasOneMenu = features.some((f) => typeof f === 'string' && f.toLowerCase().includes('1 carta'));
+    const hasOneRestaurant = features.some((f) => typeof f === 'string' && f.toLowerCase().includes('1 restaurante'));
+    return {
+      maxMenus: hasOneMenu ? 1 : Infinity,
+      maxRestaurants: hasOneRestaurant ? 1 : Infinity,
+    };
+  }
+
+  function renderLimits(limits) {
+    const usedRestaurants = storedRestaurantId ? 1 : 0;
+    const maxRestaurants = limits.maxRestaurants;
+    if (restaurantsLimitEl) {
+      restaurantsLimitEl.textContent = maxRestaurants === Infinity
+        ? `${usedRestaurants} / ilimitado`
+        : `${usedRestaurants} / ${maxRestaurants}`;
+    }
+  }
+
+  function upgradeTargets(currentTier) {
+    if (currentTier === 'free') return ['basico', 'pro', 'pro_plus'];
+    if (currentTier === 'basico') return ['pro'];
+    if (currentTier === 'pro') return ['pro_plus'];
+    // fallback: si no reconocemos el tier, mostramos todas las opciones disponibles
+    return ['basico', 'pro', 'pro_plus'];
+  }
+
+  function renderUpgradeCards(currentTier) {
+    if (!upgradeCardsEl) return;
+    const targets = upgradeTargets(currentTier).filter((t) => Boolean(tierInfo[t]));
+    if (!targets.length) {
+      upgradeCardsEl.innerHTML = '<p class="text-sm text-muted">Ya estás en el plan más alto disponible.</p>';
+      return;
+    }
+
+    const cards = targets.map((tierKey) => {
+      const tier = tierInfo[tierKey];
+      const isProPlus = tierKey === 'pro_plus';
+      const ctaHref = isProPlus ? whatsappUrl : '/contacto';
+      const priceLabel = formatPrice(tier?.price);
+      const ctaLabel = isProPlus
+        ? (priceLabel ? `Hablar por WhatsApp (${priceLabel})` : 'Hablar por WhatsApp')
+        : `Pagar ${tier.label}${priceLabel ? ` (${priceLabel})` : ''}`;
+      const accentClass = isProPlus ? 'border-[var(--color-accent)]' : 'border-default';
+      const benefitsList = Array.isArray(tier?.benefits) && tier.benefits.length
+        ? tier.benefits
+        : ['Sin prestaciones listadas'];
+
+      return `
+        <div class="rounded-xl border ${accentClass} bg-white dark:bg-neutral-900 p-4 shadow-sm space-y-3">
+          <div>
+            <p class="text-sm text-muted">Upgrade</p>
+            <h4 class="text-lg font-semibold">${tier.label}</h4>
+            <p class="text-sm text-muted">${tier.tagline}</p>
+          </div>
+          <ul class="text-sm text-muted space-y-1">
+            ${benefitsList.map((b) => `<li class="flex items-start gap-2"><span class="mt-[6px] h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]"></span><span>${b}</span></li>`).join('')}
+          </ul>
+          <a href="${ctaHref}" class="inline-flex items-center justify-center w-full rounded-lg border border-[var(--color-accent)] text-[var(--color-accent)] font-semibold px-3 py-2 hover:bg-[var(--color-accent-soft)]">
+            ${ctaLabel}
+          </a>
+        </div>
+      `;
+    });
+
+    upgradeCardsEl.innerHTML = cards.join('');
+  }
+
+  async function loadTiers() {
+    try {
+      const headers = supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {};
+      const res = await fetch(`${apiBase}/subscriptions/tiers`, { headers });
+      const payload = await res.json().catch(() => ({}));
+      const list = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.tiers)
+          ? payload.tiers
+          : Array.isArray(payload)
+            ? payload
+            : [];
+
+      if (!Array.isArray(list) || !list.length) {
+        tierInfo = { ...defaultTierInfo };
+        renderCurrentTier(storedUserTier);
+        renderUpgradeCards(storedUserTier);
+        return;
+      }
+
+      const map = {};
+      list.forEach((item) => {
+        const key = normalizeTierKey(item?.tier_name || item?.slug || item?.id || item?.name || '');
+        map[key] = {
+          label: item?.tier_name || item?.name || item?.slug || key,
+          tagline: item?.tier_description || item?.tagline || item?.description || 'Plan de MenuPro',
+          price: typeof item?.tier_base_price === 'number'
+            ? item.tier_base_price
+            : Number.isFinite(Number(item?.tier_base_price))
+              ? Number(item.tier_base_price)
+              : undefined,
+          benefits: Array.isArray(item?.features)
+            ? item.features.map((f) => f?.feature_name || f?.feature_key || '').filter(Boolean)
+            : Array.isArray(item?.benefits)
+              ? item.benefits
+              : defaultTierInfo[key]?.benefits || defaultTierInfo.free.benefits,
+        };
+      });
+
+      tierInfo = { ...defaultTierInfo, ...map };
+    } catch (err) {
+      tierInfo = { ...defaultTierInfo };
+    } finally {
+      const limits = deriveLimits(storedUserTier);
+      tierLimits = limits;
+      localStorage.setItem('tier_limits', JSON.stringify(limits));
+      const tierKey = normalizeTierKey(storedUserTier || 'free');
+      renderCurrentTier(tierKey);
+      renderUpgradeCards(tierKey);
+      renderLimits(limits);
+    }
+  }
+
+  loadTiers();
+  renderLimits(tierLimits);
+
+  function formatPrice(value) {
+    if (value === 0) return 'Gratis';
+    if (Number.isFinite(value)) {
+      return `$${value.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}/mes`;
+    }
+    return '';
+  }
+})();
+</script>

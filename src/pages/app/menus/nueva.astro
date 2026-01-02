@@ -1,0 +1,208 @@
+---
+import PrivateLayout from "../../../app/layouts/PrivateLayout.astro";
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000";
+export const prerender = false;
+---
+
+<PrivateLayout title="Crear carta | MenuPro" description="Crea una nueva carta para tu restaurante.">
+  <section id="new-menu-root" class="max-w-3xl mx-auto space-y-6" data-api-base={apiBaseUrl}>
+    <div class="space-y-1">
+      <p class="text-sm text-muted">Cartas</p>
+      <h1 class="text-3xl font-semibold">Nueva carta</h1>
+      <p class="text-sm text-muted">Define el nombre, descripción y la sección de contacto opcional.</p>
+    </div>
+
+    <div id="new-menu-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+
+    <form id="new-menu-form" class="space-y-4 bg-white dark:bg-neutral-900 border border-default rounded-2xl shadow-sm p-6">
+      <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+        Nombre de la carta <span class="text-red-500">*</span>
+        <input
+          id="menu-name"
+          name="name"
+          type="text"
+          required
+          class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          placeholder="Ej: Carta de verano"
+        />
+      </label>
+
+      <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+        Descripción
+        <textarea
+          id="menu-description"
+          name="description"
+          rows="3"
+          class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          placeholder="Ej: Platos frescos y bebidas de temporada"
+        ></textarea>
+      </label>
+
+      <label class="flex items-start gap-3 text-sm font-medium text-gray-800 dark:text-neutral-100">
+        <input id="menu-contact-toggle" name="contact_enabled" type="checkbox" class="mt-1 h-4 w-4" />
+        <span>Mostrar sección de contacto en el menú público</span>
+      </label>
+
+      <div id="contact-fields" class="hidden space-y-3 border border-dashed border-default rounded-lg p-4 bg-[var(--color-bg-soft)]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+            Título CTA
+            <input
+              id="contact-title"
+              name="contact_title"
+              type="text"
+              class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              placeholder="Ej: ¿Quieres hacer un pedido?"
+            />
+          </label>
+          <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+            Número de teléfono
+            <input
+              id="contact-phone"
+              name="contact_phone"
+              type="tel"
+              class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              placeholder="Ej: +56 9 1234 5678"
+            />
+          </label>
+        </div>
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Descripción del CTA
+          <textarea
+            id="contact-description"
+            name="contact_description"
+            rows="2"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="Ej: Escríbenos por WhatsApp y coordina tu pedido al instante"
+          ></textarea>
+        </label>
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          URL de Delivery
+          <input
+            id="contact-delivery"
+            name="contact_delivery"
+            type="url"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="Ej: https://tudelivery.com/mi-restaurante"
+          />
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <p id="new-menu-status" class="text-sm text-muted"></p>
+        <button type="submit" class="btn-primary px-4 py-2 rounded-lg font-semibold transition">Crear carta</button>
+      </div>
+    </form>
+  </section>
+</PrivateLayout>
+
+<script is:inline>
+(function() {
+  const root = document.getElementById('new-menu-root');
+  const form = document.getElementById('new-menu-form');
+  const alertEl = document.getElementById('new-menu-alert');
+  const statusEl = document.getElementById('new-menu-status');
+  const nameInput = document.getElementById('menu-name');
+  const descriptionInput = document.getElementById('menu-description');
+  const contactToggle = document.getElementById('menu-contact-toggle');
+  const contactFields = document.getElementById('contact-fields');
+  const contactTitle = document.getElementById('contact-title');
+  const contactDescription = document.getElementById('contact-description');
+  const contactPhone = document.getElementById('contact-phone');
+  const contactDelivery = document.getElementById('contact-delivery');
+
+  const rawBase = (root && root.dataset?.apiBase) ? root.dataset.apiBase : 'http://localhost:3000';
+  const trimmedBase = rawBase.replace(/\/$/, '');
+  const apiBase = trimmedBase.includes('/api') ? trimmedBase : `${trimmedBase}/api`;
+
+  const token = localStorage.getItem('supabase_token');
+  const restaurantId = localStorage.getItem('restaurant_id');
+
+  if (!token) {
+    showAlert('No hay sesión activa. Inicia sesión nuevamente.');
+    statusEl.textContent = 'Sesión requerida';
+    setTimeout(() => (window.location.href = '/app/login'), 1000);
+    return;
+  }
+
+  if (!restaurantId) {
+    showAlert('Debes crear un restaurante antes de crear cartas.');
+    statusEl.textContent = 'Restaurante requerido';
+    setTimeout(() => (window.location.href = '/app/settings'), 1000);
+    return;
+  }
+
+  contactToggle?.addEventListener('change', () => {
+    if (contactFields) {
+      contactFields.classList.toggle('hidden', !contactToggle.checked);
+    }
+  });
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form || !nameInput || !statusEl) return;
+
+    const payload = {
+      name: nameInput.value.trim(),
+      description: descriptionInput?.value.trim() || '',
+      restaurant_id: restaurantId,
+      contact: contactToggle?.checked
+        ? {
+            enabled: true,
+            title: contactTitle?.value.trim() || '',
+            description: contactDescription?.value.trim() || '',
+            phone: contactPhone?.value.trim() || '',
+            delivery_url: contactDelivery?.value.trim() || '',
+          }
+        : { enabled: false },
+    };
+
+    if (!payload.name) {
+      showAlert('El nombre de la carta es obligatorio.');
+      statusEl.textContent = 'Faltan datos';
+      statusEl.classList.add('text-red-500');
+      return;
+    }
+
+    statusEl.classList.remove('text-red-500');
+    statusEl.textContent = 'Creando carta...';
+    showAlert('');
+
+    try {
+      const res = await fetch(`${apiBase}/menus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.message || 'No se pudo crear la carta');
+      }
+
+      statusEl.textContent = 'Carta creada. Redirigiendo...';
+      setTimeout(() => (window.location.href = '/app/menus'), 800);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al crear carta';
+      showAlert(message);
+      statusEl.textContent = message;
+      statusEl.classList.add('text-red-500');
+    }
+  });
+
+  function showAlert(message) {
+    if (!alertEl) return;
+    if (!message) {
+      alertEl.classList.add('hidden');
+      alertEl.textContent = '';
+      return;
+    }
+    alertEl.textContent = message;
+    alertEl.classList.remove('hidden');
+  }
+})();
+</script>

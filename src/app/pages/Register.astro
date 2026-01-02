@@ -1,0 +1,105 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+
+const pageTitle = "Crear cuenta | MenuPro";
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000";
+---
+
+<AppLayout title={pageTitle} description="Crea tu cuenta para gestionar tu menú digital." >
+  <section class="w-full max-w-md">
+    <div class="bg-white dark:bg-neutral-900 border border-default rounded-2xl shadow-sm p-8">
+      <div class="flex flex-col gap-2 mb-6">
+        <p class="text-sm text-muted">Registro rápido</p>
+        <h1 class="text-2xl font-semibold tracking-tight">Crea tu cuenta</h1>
+        <p class="text-sm text-muted">Completa tu correo y una contraseña segura para comenzar.</p>
+      </div>
+
+      <form id="register-form" class="space-y-4" method="post" data-api-base={apiBaseUrl}>
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Correo electrónico
+          <input
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="tu@restaurante.cl"
+          />
+        </label>
+
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Contraseña
+          <input
+            name="password"
+            type="password"
+            required
+            autocomplete="new-password"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="Mínimo 8 caracteres"
+          />
+        </label>
+
+        <button type="submit" class="w-full btn-primary px-4 py-2 rounded-lg font-semibold transition">
+          Crear cuenta
+        </button>
+      </form>
+
+      <div class="mt-6 text-sm text-muted space-y-2">
+        <p id="register-status" class="text-muted"></p>
+        <p>
+          ¿Ya tienes cuenta? 
+          <a class="underline" href="/app/login">Ingresa aquí</a>.
+        </p>
+        <p>Al continuar aceptas los <a class="underline" href="/terminos">términos</a> y la <a class="underline" href="/privacidad">política de privacidad</a>.</p>
+      </div>
+    </div>
+  </section>
+</AppLayout>
+
+<script is:inline>
+  const form = document.getElementById('register-form');
+  const statusEl = document.getElementById('register-status');
+
+  // Read base URL from data attribute to avoid inline interpolation issues
+  const rawBase = (form && form instanceof HTMLElement && form.dataset?.apiBase)
+    ? form.dataset.apiBase
+    : "http://localhost:3000";
+  const trimmedBase = rawBase.replace(/\/$/, '');
+  const apiBaseUrl = trimmedBase.includes('/api') ? trimmedBase : `${trimmedBase}/api`;
+
+  console.log('Register script ready', { apiBaseUrl, hasForm: !!form, hasStatus: !!statusEl });
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!(form instanceof HTMLFormElement) || !statusEl) return;
+
+    const formData = new FormData(form);
+    const payload = {
+      email: formData.get('email'),
+      password: formData.get('password'),
+    };
+
+    statusEl.textContent = 'Enviando...';
+    statusEl.classList.remove('text-red-500');
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Error al registrar');
+      }
+
+      statusEl.textContent = 'Registro exitoso. Redirigiendo al login...';
+      window.location.href = '/app/login';
+    } catch (err) {
+      statusEl.textContent = err instanceof Error ? err.message : 'Error al registrar';
+      statusEl.classList.add('text-red-500');
+    }
+  });
+</script>

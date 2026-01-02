@@ -1,0 +1,137 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+
+const pageTitle = "Ingresar | MenuPro";
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000";
+---
+
+<AppLayout title={pageTitle} description="Ingresa con tu correo para administrar tu menú digital.">
+  <section class="w-full max-w-md">
+    <div class="bg-white dark:bg-neutral-900 border border-default rounded-2xl shadow-sm p-8">
+      <div class="flex flex-col gap-2 mb-6">
+        <p class="text-sm text-muted">Ingreso seguro</p>
+        <h1 class="text-2xl font-semibold tracking-tight">Ingresa a tu cuenta</h1>
+        <p class="text-sm text-muted">Usa tu correo y contraseña para acceder al panel.</p>
+      </div>
+
+      <form id="login-form" class="space-y-4" method="post" data-api-base={apiBaseUrl}>
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Correo electrónico
+          <input
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="tu@restaurante.cl"
+          />
+        </label>
+
+        <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
+          Contraseña
+          <input
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="mt-1 w-full rounded-lg border border-default bg-white dark:bg-neutral-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="Mínimo 8 caracteres"
+          />
+        </label>
+
+        <button type="submit" class="w-full btn-primary px-4 py-2 rounded-lg font-semibold transition">
+          Continuar
+        </button>
+      </form>
+
+      <div class="mt-6 text-sm text-muted space-y-2">
+        <p id="login-status" class="text-muted"></p>
+        <p>
+          ¿No tienes cuenta? 
+          <a class="underline" href="/app/register">Regístrate aquí</a>.
+        </p>
+        <p>Al continuar aceptas los <a class="underline" href="/terminos">términos</a> y la <a class="underline" href="/privacidad">política de privacidad</a>.</p>
+      </div>
+    </div>
+  </section>
+</AppLayout>
+
+<script is:inline>
+  const form = document.getElementById('login-form');
+  const statusEl = document.getElementById('login-status');
+
+  // Read base URL from data attribute to avoid inline interpolation issues
+  const rawBase = (form && form instanceof HTMLElement && form.dataset?.apiBase)
+    ? form.dataset.apiBase
+    : "http://localhost:3000";
+  const trimmedBase = rawBase.replace(/\/$/, '');
+  const apiBaseUrl = trimmedBase.includes('/api') ? trimmedBase : `${trimmedBase}/api`;
+
+  console.log('Login script ready', { apiBaseUrl, hasForm: !!form, hasStatus: !!statusEl });
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!(form instanceof HTMLFormElement) || !statusEl) return;
+
+    const formData = new FormData(form);
+    const payload = {
+      email: formData.get('email'),
+      password: formData.get('password'),
+    };
+
+    statusEl.textContent = 'Enviando...';
+    statusEl.classList.remove('text-red-500');
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Error al ingresar');
+      }
+
+      const loginData = data?.data ?? data;
+
+      // Guarda tokens de Supabase para futuras llamadas
+      if (loginData?.access_token) {
+        localStorage.setItem('supabase_token', loginData.access_token);
+      }
+      if (loginData?.refresh_token) {
+        localStorage.setItem('supabase_refresh_token', loginData.refresh_token);
+      }
+
+      const userName = loginData?.user?.name || loginData?.user?.email || 'Usuario';
+      const userTier = (loginData?.user_subscription || loginData?.user?.tier || 'free').toString().toLowerCase();
+      localStorage.setItem('user_name', userName);
+      localStorage.setItem('user_tier', userTier);
+
+      // Guarda datos del restaurante si vienen en la respuesta
+      const firstRestaurant = Array.isArray(loginData?.restaurants) ? loginData.restaurants[0] : null;
+      if (firstRestaurant?.id) {
+        localStorage.setItem('restaurant_id', firstRestaurant.id);
+      }
+      if (firstRestaurant?.slug) {
+        localStorage.setItem('restaurant_slug', firstRestaurant.slug);
+      }
+      if (firstRestaurant?.name) {
+        localStorage.setItem('restaurant_name', firstRestaurant.name);
+      }
+
+      const hasRestaurant = Boolean(firstRestaurant?.id);
+
+      statusEl.textContent = hasRestaurant
+        ? 'Ingreso exitoso. Redirigiendo...'
+        : 'Aún no tienes restaurante. Redirigiendo a configuración...';
+
+      window.location.href = hasRestaurant ? '/app/dashboard' : '/app/settings';
+    } catch (err) {
+      statusEl.textContent = err instanceof Error ? err.message : 'Error al ingresar';
+      statusEl.classList.add('text-red-500');
+    }
+  });
+</script>

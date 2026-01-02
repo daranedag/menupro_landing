@@ -1,0 +1,34 @@
+---
+import LandingLayout from "../layouts/LandingLayout.astro";
+
+import Hero from "../../components/sections/Hero.astro";
+import SocialProof from "../../components/sections/SocialProof.astro";
+import Problems from "../../components/sections/Problems.astro";
+import Features from "../../components/sections/Features.astro";
+import HowItWorks from "../../components/sections/HowItWorks.astro";
+import Benefits from "../../components/sections/Benefits.astro";
+import CTA from "../../components/sections/CTA.astro";
+import ContactForm from "../../components/sections/ContactForm.astro";
+---
+
+<LandingLayout
+  title="MenuPro | Carta Digital para Restaurantes con QR"
+  description="Crea y gestiona la carta digital de tu restaurante con QR. Actualiza precios en tiempo real sin impresiones. Simple, profesional y sin comisiones."
+  canonical="https://menupro.cl"
+>
+  <Hero
+    primaryCtaText="Comenzar a usar"
+    primaryCtaUrl="/app/login"
+    secondaryCtaText="Solicitar demo"
+    secondaryCtaUrl="/contacto"
+    tertiaryCtaText="Ver cómo funciona"
+    tertiaryCtaUrl="#features"
+  />
+  <SocialProof />
+  <Problems />
+  <Features />
+  <ContactForm />
+  <HowItWorks />
+  <Benefits />
+  <CTA />
+</LandingLayout>

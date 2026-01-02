@@ -1,0 +1,270 @@
+---
+import PrivateLayout from "../../app/layouts/PrivateLayout.astro";
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000";
+const restaurantId = import.meta.env.PUBLIC_RESTAURANT_ID || "1106ce3e-a2bc-4ffc-9115-8321e83a6b98";
+export const prerender = false;
+---
+
+<PrivateLayout title="Panel | MenuPro" description="Gestiona tus cartas y menús.">
+  <section id="dashboard-root" class="space-y-6" data-api-base={apiBaseUrl} data-restaurant-id={restaurantId}>
+    <div>
+      <p class="text-sm text-muted">Panel principal</p>
+      <h1 class="text-3xl font-semibold">Bienvenido</h1>
+      <p id="dashboard-restaurant" class="text-muted mt-1">Cargando restaurante...</p>
+    </div>
+
+    <div id="dashboard-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="dashboard-cards">
+      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm space-y-1">
+        <p class="text-sm text-muted">Total de cartas</p>
+        <p class="text-3xl font-bold" id="card-menus">--</p>
+        <p class="text-xs text-muted" id="menus-limit-text"></p>
+      </div>
+      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm">
+        <p class="text-sm text-muted">Secciones</p>
+        <p class="text-3xl font-bold mt-2" id="card-sections">--</p>
+      </div>
+      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm">
+        <p class="text-sm text-muted">Total de platos</p>
+        <p class="text-3xl font-bold mt-2" id="card-dishes">--</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm space-y-4">
+        <h2 class="text-xl font-semibold">Acciones rápidas</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <a id="create-menu-btn" href="/app/menus/nueva" class="block rounded-lg bg-[var(--color-accent)] text-white px-4 py-3 text-center font-medium hover:bg-[var(--color-accent-hover)]">
+            Crear nueva carta
+          </a>
+          <a href="/app/menus" class="block rounded-lg border border-default px-4 py-3 text-center font-medium hover:bg-[var(--color-bg-soft)]">
+            Gestionar cartas
+          </a>
+          <a id="public-menu-link" href="#" class="block rounded-lg border border-default px-4 py-3 text-center font-medium hover:bg-[var(--color-bg-soft)]">
+            Ver menú público
+          </a>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm">
+        <h2 class="text-xl font-semibold mb-2">Estado</h2>
+        <p class="text-sm text-muted" id="status-text">Obteniendo datos...</p>
+      </div>
+    </div>
+  </section>
+</PrivateLayout>
+
+<script is:inline>
+(function() {
+  const root = document.getElementById('dashboard-root');
+  const restaurantEl = document.getElementById('dashboard-restaurant');
+  const alertEl = document.getElementById('dashboard-alert');
+  const menusEl = document.getElementById('card-menus');
+  const sectionsEl = document.getElementById('card-sections');
+  const dishesEl = document.getElementById('card-dishes');
+  const statusEl = document.getElementById('status-text');
+  const publicMenuLink = document.getElementById('public-menu-link');
+  const createMenuBtn = document.getElementById('create-menu-btn');
+  const menusLimitText = document.getElementById('menus-limit-text');
+
+  const dashRawBase = root?.dataset.apiBase || 'http://localhost:3000';
+  const dashTrimmedBase = dashRawBase.replace(/\/$/, '');
+  const apiBase = dashTrimmedBase.includes('/api') ? dashTrimmedBase : `${dashTrimmedBase}/api`;
+
+  const supabaseToken = localStorage.getItem('supabase_token');
+  const storedRestaurantId = localStorage.getItem('restaurant_id');
+  const storedRestaurantSlug = localStorage.getItem('restaurant_slug');
+  const storedRestaurantName = localStorage.getItem('restaurant_name');
+  const storedUserName = localStorage.getItem('user_name');
+  const storedTier = (localStorage.getItem('user_tier') || 'free').toLowerCase();
+  const storedTierLimits = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('tier_limits') || '{}');
+    } catch (_e) {
+      return {};
+    }
+  })();
+  const restaurantId = storedRestaurantId || root?.dataset.restaurantId;
+
+  const defaultLimits = { maxMenus: Infinity, maxRestaurants: Infinity };
+  function normalizeTierKey(key) {
+    const raw = (key || '').toString().toLowerCase();
+    if (raw === 'basic') return 'basico';
+    if (raw === 'pro+' || raw === 'pro_plus') return 'pro_plus';
+    if (raw === 'basico' || raw === 'pro' || raw === 'free') return raw;
+    return raw || 'free';
+  }
+
+  function deriveMaxMenus(tierKey) {
+    const norm = normalizeTierKey(tierKey);
+    if (norm === 'free') return 1;
+    return Infinity;
+  }
+
+  const effectiveTier = normalizeTierKey(storedTier);
+  const limits = { ...defaultLimits, ...(storedTierLimits || {}) };
+  if (!Number.isFinite(limits.maxMenus)) {
+    limits.maxMenus = deriveMaxMenus(effectiveTier);
+  }
+
+  const titleEl = document.querySelector('h1');
+  if (titleEl && storedUserName) {
+    titleEl.textContent = `Bienvenido, ${storedUserName}`;
+  }
+
+  init();
+
+  async function init() {
+    await hydrateTierLimits();
+    await loadDashboard();
+  }
+
+  async function hydrateTierLimits() {
+    try {
+      const headers = supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {};
+      const res = await fetch(`${apiBase}/subscriptions/tiers`, { headers });
+      const payload = await res.json().catch(() => ({}));
+      const list = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.tiers)
+          ? payload.tiers
+          : Array.isArray(payload)
+            ? payload
+            : [];
+      if (!Array.isArray(list) || !list.length) return;
+      const currentTier = list.find((t) => normalizeTierKey(t?.tier_name || t?.slug || t?.id || t?.name) === effectiveTier);
+      const extractedMaxMenus = extractMaxMenusFromTier(currentTier);
+      if (Number.isFinite(extractedMaxMenus)) {
+        limits.maxMenus = extractedMaxMenus;
+        localStorage.setItem('tier_limits', JSON.stringify({ ...limits }));
+      }
+    } catch (_err) {
+      // fallback: derive basic limit
+      limits.maxMenus = deriveMaxMenus(effectiveTier);
+      localStorage.setItem('tier_limits', JSON.stringify({ ...limits }));
+    }
+  }
+
+  function extractMaxMenusFromTier(tier) {
+    if (!tier || typeof tier !== 'object') return undefined;
+    const direct = tier.max_menus ?? tier.menu_limit ?? tier.maxMenus ?? tier.limit_menus;
+    if (Number.isFinite(direct)) return Number(direct);
+    if (tier?.limits && Number.isFinite(tier.limits.menus)) return Number(tier.limits.menus);
+    const features = Array.isArray(tier.features) ? tier.features : [];
+    for (const feat of features) {
+      const key = (feat?.feature_key || feat?.key || '').toString().toLowerCase();
+      const val = feat?.value ?? feat?.feature_value ?? feat?.limit ?? feat?.max;
+      if (key.includes('menu')) {
+        if (Number.isFinite(val)) return Number(val);
+        const parsed = Number(val);
+        if (Number.isFinite(parsed)) return parsed;
+      }
+      const name = (feat?.feature_name || feat?.name || '').toString().toLowerCase();
+      if (name.includes('carta') || name.includes('menu')) {
+        const parsed = Number(val);
+        if (Number.isFinite(parsed)) return parsed;
+        const match = name.match(/(\d+)/);
+        if (match && Number.isFinite(Number(match[1]))) return Number(match[1]);
+      }
+    }
+    return undefined;
+  }
+
+  async function loadDashboard() {
+    if (!supabaseToken) {
+      showAlert('No hay sesión activa. Inicia sesión para continuar.');
+      statusEl.textContent = 'Sesión requerida.';
+      setTimeout(() => (window.location.href = '/app/login'), 1200);
+      return;
+    }
+
+    if (!restaurantId) {
+      showAlert('Debes crear un restaurante para comenzar a crear cartas, secciones y platos.');
+      statusEl.textContent = 'Sin restaurante activo.';
+      setTimeout(() => (window.location.href = '/app/settings'), 800);
+      return;
+    }
+
+    try {
+      statusEl.textContent = 'Cargando datos...';
+      const headers = supabaseToken
+        ? { Authorization: `Bearer ${supabaseToken}` }
+        : {};
+
+      console.info('Dashboard fetch', {
+        url: `${apiBase}/menus/restaurant/${restaurantId}`,
+        hasToken: Boolean(supabaseToken),
+      });
+
+      const res = await fetch(`${apiBase}/menus/restaurant/${restaurantId}`, { headers });
+      if (!res.ok) throw new Error('No se pudo cargar la información');
+      const data = await res.json();
+      const menus = Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.menus)
+          ? data.menus
+          : Array.isArray(data)
+            ? data
+            : [];
+
+      const totalMenus = menus.length;
+      const totalSections = menus.reduce((acc, menu) => acc + (menu.sections?.length || 0), 0);
+      const totalDishes = menus.reduce(
+        (acc, menu) => acc + (menu.sections?.reduce((s, sec) => s + (sec.items?.length || 0), 0) || 0),
+        0
+      );
+
+      menusEl.textContent = totalMenus.toString();
+      sectionsEl.textContent = totalSections.toString();
+      dishesEl.textContent = totalDishes.toString();
+      statusEl.textContent = 'Datos cargados';
+
+      const maxMenus = Number.isFinite(limits.maxMenus) ? limits.maxMenus : Infinity;
+      if (menusLimitText) {
+        menusLimitText.textContent = Number.isFinite(maxMenus)
+          ? `Cartas usadas: ${totalMenus} / ${maxMenus}`
+          : 'Cartas ilimitadas';
+      }
+
+      const atLimit = Number.isFinite(maxMenus) && totalMenus >= maxMenus;
+      if (createMenuBtn) {
+        createMenuBtn.classList.toggle('opacity-60', atLimit);
+        createMenuBtn.classList.toggle('cursor-not-allowed', atLimit);
+        if (atLimit) {
+          createMenuBtn.setAttribute('aria-disabled', 'true');
+          createMenuBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showAlert('Alcanzaste el límite de cartas para tu plan actual.');
+          }, { once: true });
+        }
+      }
+
+      const firstRestaurantSlug = data?.restaurant?.slug || data?.restaurantSlug || storedRestaurantSlug || '';
+      const firstMenuSlug = menus?.[0]?.slug || '';
+      if (firstRestaurantSlug && firstMenuSlug) {
+        publicMenuLink.href = `/menu/${firstRestaurantSlug}/${firstMenuSlug}`;
+      } else {
+        publicMenuLink.href = '#';
+      }
+
+      const restaurantName = data?.restaurant?.name || data?.restaurantName || storedRestaurantName || 'Tu restaurante';
+      const userName = storedUserName || 'Usuario';
+      restaurantEl.textContent = restaurantName ? `${restaurantName}` : 'Tu restaurante';
+      if (titleEl) titleEl.textContent = `Bienvenido${userName ? `, ${userName}` : ''}`;
+    } catch (err) {
+      showAlert(err instanceof Error ? err.message : 'Error al cargar datos');
+      statusEl.textContent = 'Error al cargar datos';
+    }
+  }
+
+  function showAlert(message) {
+    if (!alertEl) return;
+    alertEl.textContent = message;
+    alertEl.classList.remove('hidden');
+  }
+
+  loadDashboard();
+})();
+</script>

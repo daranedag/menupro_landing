@@ -30,6 +30,12 @@ const currentPath = Astro.url.pathname;
     >
       Contacto
     </a>
+    <a 
+      href="/app/login" 
+      class={`text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/login' ? 'text-[var(--color-accent)] border-b-2 border-[var(--color-accent)]' : ''}`}
+    >
+      Login
+    </a>
     <ThemeToggle />
   </nav>
 
@@ -68,6 +74,14 @@ const currentPath = Astro.url.pathname;
           class={`block text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/contacto' ? 'text-[var(--color-accent)]' : ''}`}
         >
           Contacto
+        </a>
+      </li>
+      <li>
+        <a 
+          href="/login" 
+          class={`block text-sm font-medium hover:text-[var(--color-accent)] transition ${currentPath === '/login' ? 'text-[var(--color-accent)]' : ''}`}
+        >
+          Login
         </a>
       </li>
     </ul>

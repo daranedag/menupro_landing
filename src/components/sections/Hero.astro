@@ -8,15 +8,19 @@ interface Props {
   primaryCtaUrl?: string;
   secondaryCtaText?: string;
   secondaryCtaUrl?: string;
+  tertiaryCtaText?: string;
+  tertiaryCtaUrl?: string;
 }
 
 const { 
   title = "Tu carta digital, siempre actualizada",
   subtitle = "Crea, edita y comparte el menú de tu restaurante en minutos. Sin reimprimir, sin depender de terceros.",
-  primaryCtaText = "Solicitar demo",
-  primaryCtaUrl = "/contacto",
-  secondaryCtaText = "Ver cómo funciona",
-  secondaryCtaUrl = "/quienes-somos"
+  primaryCtaText = "Comenzar a usar",
+  primaryCtaUrl = "/app/login",
+  secondaryCtaText = "Solicitar demo",
+  secondaryCtaUrl = "/contacto",
+  tertiaryCtaText = "Ver cómo funciona",
+  tertiaryCtaUrl = "/quienes-somos"
 } = Astro.props;
 ---
 <section class="py-12 md:py-16 px-6 max-w-7xl mx-auto">
@@ -50,6 +54,15 @@ const {
         >
           {secondaryCtaText}
         </a>
+
+        {tertiaryCtaText && tertiaryCtaUrl && (
+          <a
+            href={tertiaryCtaUrl}
+            class="text-center px-6 py-3 rounded-lg text-muted hover:text-[var(--color-text)] transition"
+          >
+            {tertiaryCtaText}
+          </a>
+        )}
       </div>
     </div>
 

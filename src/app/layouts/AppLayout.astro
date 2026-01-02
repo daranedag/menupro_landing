@@ -1,0 +1,74 @@
+---
+import "../../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+}
+
+const {
+  title = "MenuPro | Ingresar",
+  description = "Accede para gestionar tu menú digital.",
+  canonical,
+  ogImage = "/images/og-default.png",
+} = Astro.props;
+
+const siteUrl = "https://menupro.cl";
+const fullCanonical = canonical || `${siteUrl}${Astro.url.pathname}`;
+const fullOgImage = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={fullCanonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={fullCanonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={fullOgImage} />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script is:inline>
+      const theme = localStorage.getItem("theme");
+      const htmlElement = document.documentElement;
+
+      if (theme === "light") {
+        htmlElement.classList.remove("dark");
+      } else if (theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        htmlElement.classList.add("dark");
+      } else if (!theme) {
+        htmlElement.classList.remove("dark");
+      }
+    </script>
+  </head>
+  <body class="bg-soft text-gray-900 antialiased dark:bg-neutral-950 dark:text-neutral-100 min-h-screen">
+    <header class="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto">
+      <a href="/" class="text-lg font-semibold tracking-tight">MenuPro</a>
+      <nav class="flex items-center gap-4 text-sm">
+        <a class="hover:underline" href="/">Volver a la web</a>
+      </nav>
+    </header>
+
+    <main class="px-6 pb-12 flex justify-center">
+      <slot />
+    </main>
+  </body>
+</html>

@@ -67,8 +67,6 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000
   const trimmedBase = rawBase.replace(/\/$/, '');
   const apiBaseUrl = trimmedBase.includes('/api') ? trimmedBase : `${trimmedBase}/api`;
 
-  console.log('Login script ready', { apiBaseUrl, hasForm: !!form, hasStatus: !!statusEl });
-
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!(form instanceof HTMLFormElement) || !statusEl) return;

@@ -14,43 +14,50 @@ export const prerender = false;
       <p id="dashboard-restaurant" class="text-muted mt-1">Cargando restaurante...</p>
     </div>
 
-    <div id="dashboard-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="dashboard-cards">
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm space-y-1">
-        <p class="text-sm text-muted">Total de cartas</p>
-        <p class="text-3xl font-bold" id="card-menus">--</p>
-        <p class="text-xs text-muted" id="menus-limit-text"></p>
-      </div>
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm">
-        <p class="text-sm text-muted">Secciones</p>
-        <p class="text-3xl font-bold mt-2" id="card-sections">--</p>
-      </div>
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm">
-        <p class="text-sm text-muted">Total de platos</p>
-        <p class="text-3xl font-bold mt-2" id="card-dishes">--</p>
-      </div>
+    <div id="dashboard-loading" class="flex items-center gap-2 text-sm text-muted">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <span>Cargando datos...</span>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="lg:col-span-2 rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm space-y-4">
-        <h2 class="text-xl font-semibold">Acciones rápidas</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <a id="create-menu-btn" href="/app/menus/nueva" class="block rounded-lg bg-[var(--color-accent)] text-white px-4 py-3 text-center font-medium hover:bg-[var(--color-accent-hover)]">
-            Crear nueva carta
-          </a>
-          <a href="/app/menus" class="block rounded-lg border border-default px-4 py-3 text-center font-medium hover:bg-[var(--color-bg-soft)]">
-            Gestionar cartas
-          </a>
-          <a id="public-menu-link" href="#" class="block rounded-lg border border-default px-4 py-3 text-center font-medium hover:bg-[var(--color-bg-soft)]">
-            Ver menú público
-          </a>
+    <div id="dashboard-content" class="space-y-6 hidden">
+      <div id="dashboard-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="dashboard-cards">
+        <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm space-y-1">
+          <p class="text-sm text-muted">Total de cartas</p>
+          <p class="text-3xl font-bold" id="card-menus">--</p>
+          <p class="text-xs text-muted" id="menus-limit-text"></p>
+        </div>
+        <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm">
+          <p class="text-sm text-muted">Secciones</p>
+          <p class="text-3xl font-bold mt-2" id="card-sections">--</p>
+        </div>
+        <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 shadow-sm">
+          <p class="text-sm text-muted">Total de platos</p>
+          <p class="text-3xl font-bold mt-2" id="card-dishes">--</p>
         </div>
       </div>
 
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm">
-        <h2 class="text-xl font-semibold mb-2">Estado</h2>
-        <p class="text-sm text-muted" id="status-text">Obteniendo datos...</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm space-y-4">
+          <h2 class="text-xl font-semibold">Acciones rápidas</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a id="create-menu-btn" href="/app/menus/nueva" class="block rounded-lg bg-[var(--color-accent)] text-white px-4 py-3 text-center font-medium hover:bg-[var(--color-accent-hover)]">
+              Crear nueva carta
+            </a>
+            <a href="/app/menus" class="block rounded-lg border border-default px-4 py-3 text-center font-medium hover:bg-[var(--color-bg-soft)]">
+              Gestionar cartas
+            </a>
+            <a id="public-menu-link" href="#" class="block rounded-lg border border-default px-4 py-3 text-center font-medium hover:bg-[var(--color-bg-soft)]">
+              Ver menú público
+            </a>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 shadow-sm">
+          <h2 class="text-xl font-semibold mb-2">Estado</h2>
+          <p class="text-sm text-muted" id="status-text">Obteniendo datos...</p>
+        </div>
       </div>
     </div>
   </section>
@@ -65,6 +72,8 @@ export const prerender = false;
   const sectionsEl = document.getElementById('card-sections');
   const dishesEl = document.getElementById('card-dishes');
   const statusEl = document.getElementById('status-text');
+  const loadingEl = document.getElementById('dashboard-loading');
+  const contentEl = document.getElementById('dashboard-content');
   const publicMenuLink = document.getElementById('public-menu-link');
   const createMenuBtn = document.getElementById('create-menu-btn');
   const menusLimitText = document.getElementById('menus-limit-text');
@@ -90,11 +99,35 @@ export const prerender = false;
 
   const defaultLimits = { maxMenus: Infinity, maxRestaurants: Infinity };
   function normalizeTierKey(key) {
-    const raw = (key || '').toString().toLowerCase();
-    if (raw === 'basic') return 'basico';
-    if (raw === 'pro+' || raw === 'pro_plus') return 'pro_plus';
-    if (raw === 'basico' || raw === 'pro' || raw === 'free') return raw;
-    return raw || 'free';
+    const raw = (key || '').toString().trim().toLowerCase();
+    const cleaned = raw.replace(/\s+/g, '_').replace(/\+/g, '_').replace(/-/g, '_');
+    if (cleaned.includes('free') || cleaned.includes('gratis')) return 'free';
+    if (cleaned === 'basic') return 'basico';
+    if (cleaned === 'pro_plus' || cleaned === 'proplus' || cleaned === 'pro__') return 'pro_plus';
+    if (cleaned === 'basico' || cleaned === 'pro' || cleaned === 'free') return cleaned;
+    return cleaned || 'free';
+  }
+
+  const tierCaps = {
+    free: { maxMenus: 1, maxRestaurants: 1 },
+    basico: { maxMenus: 1, maxRestaurants: 1 },
+    pro: { maxMenus: 3, maxRestaurants: 3 },
+    pro_plus: { maxMenus: 0, maxRestaurants: 0 }, // 0 => ilimitado
+  };
+
+  function getTierCaps(tierKey) {
+    const normalized = normalizeTierKey(tierKey);
+    return tierCaps[normalized] || tierCaps.free;
+  }
+
+  function capForEnforcement(cap) {
+    if (cap === 0) return Infinity;
+    if (Number.isFinite(cap)) return cap;
+    return Infinity;
+  }
+
+  function capLabel(cap) {
+    return cap === 0 ? 'ilimitado' : String(cap);
   }
 
   function deriveMaxMenus(tierKey) {
@@ -103,11 +136,43 @@ export const prerender = false;
     return Infinity;
   }
 
-  const effectiveTier = normalizeTierKey(storedTier);
-  const limits = { ...defaultLimits, ...(storedTierLimits || {}) };
-  if (!Number.isFinite(limits.maxMenus)) {
-    limits.maxMenus = deriveMaxMenus(effectiveTier);
+  function deriveMaxRestaurants(tierKey) {
+    const norm = normalizeTierKey(tierKey);
+    if (norm === 'free') return 1;
+    return Infinity;
   }
+
+  function parseLimitNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : undefined;
+  }
+
+  function parseCachedLimit(value) {
+    if (value === null || value === undefined) return undefined;
+    if (value === 'Infinity' || value === 'infinity') return undefined;
+    if (value === Infinity || value === -Infinity) return undefined;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return undefined;
+    return num;
+  }
+
+  function serializeLimitsForStorage(obj) {
+    return {
+      maxMenus: Number.isFinite(obj?.maxMenus) || obj?.maxMenus === 0 ? obj.maxMenus : null,
+      maxRestaurants: Number.isFinite(obj?.maxRestaurants) || obj?.maxRestaurants === 0 ? obj.maxRestaurants : null,
+    };
+  }
+
+  function normalizeLimitForTier(value, tierKey) {
+    if (normalizeTierKey(tierKey) === 'pro_plus' && value === 0) return Infinity;
+    return value;
+  }
+
+  const effectiveTier = normalizeTierKey(storedTier);
+  const limits = { ...defaultLimits };
+  const caps = getTierCaps(effectiveTier);
+  limits.maxMenus = capForEnforcement(caps.maxMenus);
+  limits.maxRestaurants = capForEnforcement(caps.maxRestaurants);
 
   const titleEl = document.querySelector('h1');
   if (titleEl && storedUserName) {
@@ -117,11 +182,20 @@ export const prerender = false;
   init();
 
   async function init() {
+    setLoading(true);
     await hydrateTierLimits();
     await loadDashboard();
+    setLoading(false);
   }
 
   async function hydrateTierLimits() {
+    const enforceFreeCaps = () => {
+      if (effectiveTier === 'free') {
+        limits.maxMenus = deriveMaxMenus(effectiveTier);
+        limits.maxRestaurants = deriveMaxRestaurants(effectiveTier);
+      }
+    };
+
     try {
       const headers = supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {};
       const res = await fetch(`${apiBase}/subscriptions/tiers`, { headers });
@@ -133,50 +207,99 @@ export const prerender = false;
           : Array.isArray(payload)
             ? payload
             : [];
-      if (!Array.isArray(list) || !list.length) return;
-      const currentTier = list.find((t) => normalizeTierKey(t?.tier_name || t?.slug || t?.id || t?.name) === effectiveTier);
-      const extractedMaxMenus = extractMaxMenusFromTier(currentTier);
-      if (Number.isFinite(extractedMaxMenus)) {
-        limits.maxMenus = extractedMaxMenus;
-        localStorage.setItem('tier_limits', JSON.stringify({ ...limits }));
+      if (!Array.isArray(list) || !list.length) {
+        enforceFreeCaps();
+        const toStore = effectiveTier === 'free'
+          ? { maxMenus: 1, maxRestaurants: 1 }
+          : serializeLimitsForStorage(limits);
+        localStorage.setItem('tier_limits', JSON.stringify(toStore));
+        return;
       }
+      const currentTier = list.find((t) => normalizeTierKey(t?.tier_name || t?.slug || t?.id || t?.name) === effectiveTier);
+        const extractedMaxMenus = extractMaxMenusFromTier(currentTier);
+        const extractedMaxRestaurants = extractMaxRestaurantsFromTier(currentTier);
+      const fetchedCaps = getTierCaps(effectiveTier);
+      const hydratedCaps = {
+        maxMenus: Number.isFinite(extractedMaxMenus) ? extractedMaxMenus : fetchedCaps.maxMenus,
+        maxRestaurants: Number.isFinite(extractedMaxRestaurants) ? extractedMaxRestaurants : fetchedCaps.maxRestaurants,
+      };
+      limits.maxMenus = capForEnforcement(hydratedCaps.maxMenus);
+      limits.maxRestaurants = capForEnforcement(hydratedCaps.maxRestaurants);
+      enforceFreeCaps();
+      const toStore = serializeLimitsForStorage({
+        maxMenus: hydratedCaps.maxMenus,
+        maxRestaurants: hydratedCaps.maxRestaurants,
+      });
+      localStorage.setItem('tier_limits', JSON.stringify(toStore));
     } catch (_err) {
       // fallback: derive basic limit
-      limits.maxMenus = deriveMaxMenus(effectiveTier);
-      localStorage.setItem('tier_limits', JSON.stringify({ ...limits }));
+      const fallbackCaps = getTierCaps(effectiveTier);
+      limits.maxMenus = capForEnforcement(fallbackCaps.maxMenus);
+      limits.maxRestaurants = capForEnforcement(fallbackCaps.maxRestaurants);
+      enforceFreeCaps();
+      const toStore = serializeLimitsForStorage(fallbackCaps);
+      localStorage.setItem('tier_limits', JSON.stringify(toStore));
     }
   }
 
   function extractMaxMenusFromTier(tier) {
     if (!tier || typeof tier !== 'object') return undefined;
-    const direct = tier.max_menus ?? tier.menu_limit ?? tier.maxMenus ?? tier.limit_menus;
-    if (Number.isFinite(direct)) return Number(direct);
-    if (tier?.limits && Number.isFinite(tier.limits.menus)) return Number(tier.limits.menus);
+    const direct = parseLimitNumber(tier.max_menus ?? tier.menu_limit ?? tier.maxMenus ?? tier.limit_menus);
+    if (Number.isFinite(direct)) return direct;
+    const nested = parseLimitNumber(tier?.limits?.menus);
+    if (Number.isFinite(nested)) return nested;
     const features = Array.isArray(tier.features) ? tier.features : [];
     for (const feat of features) {
       const key = (feat?.feature_key || feat?.key || '').toString().toLowerCase();
       const val = feat?.value ?? feat?.feature_value ?? feat?.limit ?? feat?.max;
-      if (key.includes('menu')) {
-        if (Number.isFinite(val)) return Number(val);
-        const parsed = Number(val);
-        if (Number.isFinite(parsed)) return parsed;
+      const parsedVal = parseLimitNumber(val);
+      if (key.includes('menu') || key.includes('carta')) {
+        if (Number.isFinite(parsedVal)) return parsedVal;
       }
       const name = (feat?.feature_name || feat?.name || '').toString().toLowerCase();
       if (name.includes('carta') || name.includes('menu')) {
-        const parsed = Number(val);
-        if (Number.isFinite(parsed)) return parsed;
+        if (Number.isFinite(parsedVal)) return parsedVal;
         const match = name.match(/(\d+)/);
-        if (match && Number.isFinite(Number(match[1]))) return Number(match[1]);
+        const parsedMatch = parseLimitNumber(match?.[1]);
+        if (Number.isFinite(parsedMatch)) return parsedMatch;
+      }
+    }
+    return undefined;
+  }
+
+  function extractMaxRestaurantsFromTier(tier) {
+    if (!tier || typeof tier !== 'object') return undefined;
+    const direct = parseLimitNumber(tier.max_restaurants ?? tier.restaurant_limit ?? tier.maxRestaurants ?? tier.limit_restaurants);
+    if (Number.isFinite(direct)) return direct;
+    const nested = parseLimitNumber(tier?.limits?.restaurants ?? tier?.limits?.restaurants_count);
+    if (Number.isFinite(nested)) return nested;
+
+    const features = Array.isArray(tier.features) ? tier.features : [];
+    for (const feat of features) {
+      const key = (feat?.feature_key || feat?.key || '').toString().toLowerCase();
+      const val = feat?.value ?? feat?.feature_value ?? feat?.limit ?? feat?.max;
+      const parsedVal = parseLimitNumber(val);
+      if (key.includes('restaurant') || key.includes('restaurante')) {
+        if (Number.isFinite(parsedVal)) return parsedVal;
+      }
+      const name = (feat?.feature_name || feat?.name || '').toString().toLowerCase();
+      if (name.includes('restaurant') || name.includes('restaurante')) {
+        if (Number.isFinite(parsedVal)) return parsedVal;
+        const match = name.match(/(\d+)/);
+        const parsedMatch = parseLimitNumber(match?.[1]);
+        if (Number.isFinite(parsedMatch)) return parsedMatch;
       }
     }
     return undefined;
   }
 
   async function loadDashboard() {
+    setLoading(true);
     if (!supabaseToken) {
       showAlert('No hay sesión activa. Inicia sesión para continuar.');
       statusEl.textContent = 'Sesión requerida.';
       setTimeout(() => (window.location.href = '/app/login'), 1200);
+      setLoading(false);
       return;
     }
 
@@ -184,6 +307,7 @@ export const prerender = false;
       showAlert('Debes crear un restaurante para comenzar a crear cartas, secciones y platos.');
       statusEl.textContent = 'Sin restaurante activo.';
       setTimeout(() => (window.location.href = '/app/settings'), 800);
+      setLoading(false);
       return;
     }
 
@@ -192,11 +316,6 @@ export const prerender = false;
       const headers = supabaseToken
         ? { Authorization: `Bearer ${supabaseToken}` }
         : {};
-
-      console.info('Dashboard fetch', {
-        url: `${apiBase}/menus/restaurant/${restaurantId}`,
-        hasToken: Boolean(supabaseToken),
-      });
 
       const res = await fetch(`${apiBase}/menus/restaurant/${restaurantId}`, { headers });
       if (!res.ok) throw new Error('No se pudo cargar la información');
@@ -221,10 +340,17 @@ export const prerender = false;
       dishesEl.textContent = totalDishes.toString();
       statusEl.textContent = 'Datos cargados';
 
+      const storedCaps = serializeLimitsForStorage({
+        maxMenus: Number.isFinite(limits.maxMenus) ? limits.maxMenus : null,
+        maxRestaurants: Number.isFinite(limits.maxRestaurants) ? limits.maxRestaurants : null,
+      });
+      localStorage.setItem('tier_limits', JSON.stringify(storedCaps));
+
       const maxMenus = Number.isFinite(limits.maxMenus) ? limits.maxMenus : Infinity;
+      const maxMenusLabel = capLabel(storedCaps.maxMenus === null ? limits.maxMenus : storedCaps.maxMenus);
       if (menusLimitText) {
         menusLimitText.textContent = Number.isFinite(maxMenus)
-          ? `Cartas usadas: ${totalMenus} / ${maxMenus}`
+          ? `Cartas usadas: ${totalMenus} / ${maxMenusLabel}`
           : 'Cartas ilimitadas';
       }
 
@@ -256,6 +382,8 @@ export const prerender = false;
     } catch (err) {
       showAlert(err instanceof Error ? err.message : 'Error al cargar datos');
       statusEl.textContent = 'Error al cargar datos';
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -265,6 +393,37 @@ export const prerender = false;
     alertEl.classList.remove('hidden');
   }
 
+  function setLoading(isLoading) {
+    if (loadingEl) loadingEl.classList.toggle('hidden', !isLoading);
+    const contentEl = document.getElementById('dashboard-content');
+    if (contentEl) contentEl.classList.toggle('hidden', isLoading);
+    if (createMenuBtn) {
+      createMenuBtn.toggleAttribute('aria-disabled', isLoading);
+      createMenuBtn.classList.toggle('pointer-events-none', isLoading);
+      createMenuBtn.classList.toggle('opacity-60', isLoading);
+    }
+    if (publicMenuLink) {
+      publicMenuLink.classList.toggle('pointer-events-none', isLoading);
+      publicMenuLink.classList.toggle('opacity-60', isLoading);
+    }
+  }
+
   loadDashboard();
 })();
 </script>
+
+<style is:inline>
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--color-accent, #7c3aed);
+    border-radius: 9999px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>

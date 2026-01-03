@@ -7,7 +7,7 @@ export const prerender = false;
 
 <PrivateLayout title="Mis cartas | MenuPro" description="Gestiona tus cartas, secciones y platos.">
   <section id="menus-root" class="max-w-6xl mx-auto space-y-6" data-api-base={apiBaseUrl}>
-    <div class="flex items-center justify-between gap-3 flex-wrap">
+    <div id="menus-header" class="flex items-center justify-between gap-3 flex-wrap">
       <div>
         <p class="text-sm text-muted">Cartas</p>
         <h1 class="text-3xl font-semibold">Mis cartas</h1>
@@ -19,10 +19,17 @@ export const prerender = false;
       </div>
     </div>
 
-    <div id="menus-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
-    <p id="menus-status" class="text-sm text-muted"></p>
+    <div id="menus-loading" class="flex items-center gap-2 text-sm text-muted">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <span>Cargando cartas...</span>
+    </div>
 
-    <div id="menus-list" class="space-y-4"></div>
+    <div id="menus-content" class="space-y-4 hidden">
+      <div id="menus-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+      <p id="menus-status" class="text-sm text-muted"></p>
+
+      <div id="menus-list" class="space-y-4"></div>
+    </div>
   </section>
 </PrivateLayout>
 
@@ -33,9 +40,13 @@ export const prerender = false;
   const statusEl = document.getElementById('menus-status');
   const listEl = document.getElementById('menus-list');
   const createBtn = document.getElementById('create-menu-btn');
+  const headerEl = document.getElementById('menus-header');
   const limitHintEl = document.getElementById('menus-limit-hint');
+  const loadingEl = document.getElementById('menus-loading');
+  const contentEl = document.getElementById('menus-content');
 
   const defaultCreateLabel = createBtn?.dataset?.defaultLabel || createBtn?.textContent?.trim() || 'Crear nueva carta';
+  const defaultCreateHref = createBtn?.getAttribute('href') || '';
 
   const rawBase = root?.dataset.apiBase || 'http://localhost:3000';
   const trimmedBase = rawBase.replace(/\/$/, '');
@@ -45,6 +56,7 @@ export const prerender = false;
   const restaurantId = localStorage.getItem('restaurant_id');
   const restaurantSlug = localStorage.getItem('restaurant_slug') || '';
   const userTier = normalizeTierKey(localStorage.getItem('user_tier') || 'free');
+  let cachedTierLimits = {};
   let maxMenus = Infinity;
 
   if (!token) {
@@ -63,7 +75,21 @@ export const prerender = false;
 
   function normalizeTierKey(key) {
     const raw = (key || '').toString().trim().toLowerCase();
-    return raw.replace(/\s+/g, '_').replace(/\+/g, '_').replace(/-/g, '_') || 'free';
+    const cleaned = raw.replace(/\s+/g, '_').replace(/\+/g, '_').replace(/-/g, '_');
+    if (cleaned.includes('free') || cleaned.includes('gratis')) return 'free';
+    return cleaned || 'free';
+  }
+
+  const tierCaps = {
+    free: { maxMenus: 1, maxRestaurants: 1 },
+    basico: { maxMenus: 1, maxRestaurants: 1 },
+    pro: { maxMenus: 3, maxRestaurants: 3 },
+    pro_plus: { maxMenus: 0, maxRestaurants: 0 }, // 0 => ilimitado
+  };
+
+  function getTierCaps(tierKey) {
+    const normalized = normalizeTierKey(tierKey);
+    return tierCaps[normalized] || tierCaps.free;
   }
 
   function formatTierLabel(key) {
@@ -74,34 +100,55 @@ export const prerender = false;
     return 'Free';
   }
 
+  function parseLimitNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : undefined;
+  }
+
+  function parseCachedLimit(value) {
+    if (value === null || value === undefined) return undefined;
+    if (value === 'Infinity' || value === 'infinity') return undefined;
+    if (value === Infinity || value === -Infinity) return undefined;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return undefined;
+    return num;
+  }
+
+  function normalizeLimitForTier(value, tierKey) {
+    if (normalizeTierKey(tierKey) === 'pro_plus' && value === 0) return Infinity;
+    return value;
+  }
+
+  function serializeLimitsForStorage(obj) {
+    return {
+      maxMenus: Number.isFinite(obj?.maxMenus) ? obj.maxMenus : null,
+      maxRestaurants: Number.isFinite(obj?.maxRestaurants) ? obj.maxRestaurants : null,
+    };
+  }
+
   function deriveMaxMenus(tierKey) {
+    const caps = getTierCaps(tierKey);
+    const cap = caps.maxMenus;
+    if (cap === 0) return Infinity;
+    if (Number.isFinite(cap)) return cap;
     const normalized = normalizeTierKey(tierKey);
     if (normalized === 'free') return 1;
     return Infinity;
   }
 
+  function enforceTierCaps() {
+    const caps = getTierCaps(userTier);
+    maxMenus = caps.maxMenus === 0 ? Infinity : caps.maxMenus;
+  }
+
   function extractMaxMenusFromTier(tier) {
     if (!tier || typeof tier !== 'object') return undefined;
-    const direct = tier.max_menus ?? tier.menu_limit ?? tier.maxMenus ?? tier.limit_menus;
-    if (Number.isFinite(direct)) return Number(direct);
-    if (tier?.limits && Number.isFinite(tier.limits.menus)) return Number(tier.limits.menus);
-    const features = Array.isArray(tier.features) ? tier.features : [];
-    for (const feat of features) {
-      const key = (feat?.feature_key || feat?.key || '').toString().toLowerCase();
-      const val = feat?.value ?? feat?.feature_value ?? feat?.limit ?? feat?.max;
-      if (key.includes('menu')) {
-        if (Number.isFinite(val)) return Number(val);
-        const parsed = Number(val);
-        if (Number.isFinite(parsed)) return parsed;
-      }
-      const name = (feat?.feature_name || feat?.name || '').toString().toLowerCase();
-      if (name.includes('carta') || name.includes('menu')) {
-        const parsed = Number(val);
-        if (Number.isFinite(parsed)) return parsed;
-        const match = name.match(/(\d+)/);
-        if (match && Number.isFinite(Number(match[1]))) return Number(match[1]);
-      }
-    }
+    const direct = parseLimitNumber(tier.max_menus ?? tier.menu_limit ?? tier.maxMenus ?? tier.limit_menus);
+    if (Number.isFinite(direct)) return direct;
+    const nested = parseLimitNumber(tier?.limits?.menus);
+    if (Number.isFinite(nested)) return nested;
+    const caps = getTierCaps(tier?.tier_name || tier?.slug || tier?.id || userTier);
+    if (Number.isFinite(caps.maxMenus) || caps.maxMenus === 0) return caps.maxMenus;
     return undefined;
   }
 
@@ -109,8 +156,11 @@ export const prerender = false;
     // 1) Usa cache previa si existe
     try {
       const cached = JSON.parse(localStorage.getItem('tier_limits') || '{}');
-      if (cached && Number.isFinite(cached.maxMenus)) {
-        maxMenus = Number(cached.maxMenus);
+      cachedTierLimits = cached && typeof cached === 'object' ? cached : {};
+      const cachedMaxMenus = parseCachedLimit(cached?.maxMenus);
+      if (Number.isFinite(cachedMaxMenus)) {
+        maxMenus = normalizeLimitForTier(cachedMaxMenus, userTier);
+        enforceTierCaps();
         enforceMenuLimit(0); // pinta hint inicial
       }
     } catch (_e) {
@@ -121,26 +171,41 @@ export const prerender = false;
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await fetch(`${apiBase}/subscriptions/tiers`, { headers });
-      const payload = await res.json().catch(() => ({}));
-      const list = Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.tiers)
-          ? payload.tiers
-          : Array.isArray(payload)
-            ? payload
+      const tiersPayload = await res.json().catch(() => ({}));
+      const list = Array.isArray(tiersPayload?.data)
+        ? tiersPayload.data
+        : Array.isArray(tiersPayload?.tiers)
+          ? tiersPayload.tiers
+          : Array.isArray(tiersPayload)
+            ? tiersPayload
             : [];
-      if (!Array.isArray(list) || !list.length) return;
+      const caps = getTierCaps(userTier);
+      const storeCaps = { ...caps };
+
+      if (!Array.isArray(list) || !list.length) {
+        enforceTierCaps();
+        const toStore = serializeLimitsForStorage(storeCaps);
+        localStorage.setItem('tier_limits', JSON.stringify(toStore));
+        enforceMenuLimit(0);
+        return;
+      }
 
       const currentTier = list.find((t) => normalizeTierKey(t?.tier_name || t?.slug || t?.id || t?.name) === userTier);
       const extracted = extractMaxMenusFromTier(currentTier);
-      const fallback = deriveMaxMenus(userTier);
-      maxMenus = Number.isFinite(extracted) ? extracted : fallback;
-      localStorage.setItem('tier_limits', JSON.stringify({ maxMenus }));
+      const normalized = normalizeLimitForTier(Number.isFinite(extracted) ? extracted : caps.maxMenus, userTier);
+      maxMenus = normalized;
+      enforceTierCaps();
+      storeCaps.maxMenus = Number.isFinite(extracted) || extracted === 0 ? extracted : caps.maxMenus;
+      const toStore = serializeLimitsForStorage(storeCaps);
+      localStorage.setItem('tier_limits', JSON.stringify(toStore));
       enforceMenuLimit(0);
     } catch (_err) {
       // fallback already handled
-      maxMenus = deriveMaxMenus(userTier);
-      localStorage.setItem('tier_limits', JSON.stringify({ maxMenus }));
+      const caps = getTierCaps(userTier);
+      maxMenus = normalizeLimitForTier(caps.maxMenus, userTier);
+      enforceTierCaps();
+      const toStore = serializeLimitsForStorage(caps);
+      localStorage.setItem('tier_limits', JSON.stringify(toStore));
     }
   }
 
@@ -159,12 +224,14 @@ export const prerender = false;
     }
 
     if (limitHintEl) {
-      if (maxMenus === Infinity) {
+      const caps = getTierCaps(userTier);
+      const capLabel = caps.maxMenus === 0 ? 'ilimitado' : String(caps.maxMenus);
+      if (caps.maxMenus === 0) {
         limitHintEl.textContent = `Plan ${formatTierLabel(userTier)}: cartas ilimitadas`;
       } else {
         limitHintEl.textContent = capped
-          ? `Has alcanzado ${currentCount}/${maxMenus} cartas en tu plan ${formatTierLabel(userTier)}.`
-          : `Cartas usadas: ${currentCount}/${maxMenus} en tu plan ${formatTierLabel(userTier)}.`;
+          ? `Has alcanzado ${currentCount}/${capLabel} cartas en tu plan ${formatTierLabel(userTier)}.`
+          : `Cartas usadas: ${currentCount}/${capLabel} en tu plan ${formatTierLabel(userTier)}.`;
       }
     }
   }
@@ -172,11 +239,14 @@ export const prerender = false;
   init();
 
   async function init() {
+    setLoading(true);
     await hydrateTierLimits();
     await loadMenus();
+    setLoading(false);
   }
 
   async function loadMenus() {
+    setLoading(true);
     statusEl.textContent = 'Cargando cartas...';
     try {
       const res = await fetch(`${apiBase}/menus/restaurant/${restaurantId}`, {
@@ -198,6 +268,8 @@ export const prerender = false;
     } catch (err) {
       showAlert(err instanceof Error ? err.message : 'Error al cargar las cartas');
       statusEl.textContent = 'Error al cargar las cartas';
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -260,15 +332,27 @@ export const prerender = false;
         <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 shadow-sm space-y-4">
           <div class="flex flex-col gap-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
-              <div class="space-y-1">
+              <div class="space-y-2">
                 <div class="flex items-center gap-2">
                   <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isPublished ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200'}">
                     <span class="h-2 w-2 rounded-full ${isPublished ? 'bg-green-500' : 'bg-amber-500'}"></span>
                     ${isPublished ? 'Publicado' : 'Borrador'}
                   </span>
-                  <span class="text-xs text-muted">${slug || 'Sin slug'}</span>
                 </div>
-                <h2 class="text-xl font-semibold">${menu?.name || 'Sin nombre'}</h2>
+                <div class="space-y-2">
+                  <h2 class="text-xl font-semibold">${menu?.name || 'Sin nombre'}</h2>
+                  <form class="title-form flex flex-wrap items-center gap-2" data-menu-id="${menu?.id}">
+                    <input
+                      type="text"
+                      name="menu_title"
+                      value="${menu?.name || ''}"
+                      class="w-full md:w-64 rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-950 text-sm"
+                      placeholder="Nuevo título"
+                      required
+                    />
+                    <button type="submit" class="btn-primary px-3 py-2 rounded-lg text-sm font-semibold">Guardar título</button>
+                  </form>
+                </div>
                 <p class="text-sm text-muted">${menu?.description || 'Sin descripción'}</p>
                 <div class="flex items-center gap-3 text-xs text-muted">
                   <span>${sections.length} secciones</span>
@@ -290,10 +374,6 @@ export const prerender = false;
             </div>
 
             <div class="flex items-start gap-3 flex-wrap">
-              <div class="rounded-lg border border-default bg-[var(--color-bg-soft)] px-4 py-3">
-                <p class="text-xs text-muted">Estado</p>
-                <p class="text-sm font-semibold">${isPublished ? 'Publicado' : 'Borrador'}</p>
-              </div>
               <div class="rounded-lg border border-default bg-[var(--color-bg-soft)] px-4 py-3">
                 <p class="text-xs text-muted">Vistas</p>
                 <p class="text-sm font-semibold">${views}</p>
@@ -345,6 +425,7 @@ export const prerender = false;
     attachDishFormHandlers();
     attachPublishHandlers();
     attachQrHandlers();
+    attachTitleFormHandlers();
   }
 
   function attachSectionFormHandlers() {
@@ -374,6 +455,40 @@ export const prerender = false;
           loadMenus();
         } catch (err) {
           setStatus(err instanceof Error ? err.message : 'Error al crear sección', true);
+        }
+      });
+    });
+  }
+
+  function attachTitleFormHandlers() {
+    const forms = listEl?.querySelectorAll('.title-form');
+    forms?.forEach((form) => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const target = e.currentTarget;
+        const menuId = target?.dataset?.menuId;
+        const title = target?.menu_title?.value?.trim();
+        if (!menuId || !title) return;
+        setStatus('Actualizando título...');
+        const submitBtn = target.querySelector('button[type="submit"]');
+        try {
+          submitBtn?.setAttribute('disabled', 'true');
+          const res = await fetch(`${apiBase}/menus/${menuId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name: title }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.message || 'No se pudo actualizar el título');
+          setStatus('Título actualizado.');
+          loadMenus();
+        } catch (err) {
+          setStatus(err instanceof Error ? err.message : 'Error al actualizar el título', true);
+        } finally {
+          submitBtn?.removeAttribute('disabled');
         }
       });
     });
@@ -513,5 +628,43 @@ export const prerender = false;
     alertEl.textContent = message;
     alertEl.classList.remove('hidden');
   }
+
+  function setLoading(isLoading) {
+    if (loadingEl) loadingEl.classList.toggle('hidden', !isLoading);
+    if (contentEl) contentEl.classList.toggle('hidden', isLoading);
+    if (headerEl) headerEl.classList.toggle('hidden', isLoading);
+    if (createBtn) {
+      createBtn.toggleAttribute('aria-disabled', isLoading);
+      createBtn.classList.toggle('pointer-events-none', isLoading);
+      createBtn.classList.toggle('opacity-60', isLoading);
+      createBtn.setAttribute('tabindex', isLoading ? '-1' : '0');
+      if (isLoading) {
+        createBtn.dataset.hrefCached = createBtn.getAttribute('href') || defaultCreateHref;
+        createBtn.removeAttribute('href');
+        createBtn.style.pointerEvents = 'none';
+      } else {
+        const href = createBtn.dataset.hrefCached || defaultCreateHref;
+        if (href) createBtn.setAttribute('href', href);
+        createBtn.style.pointerEvents = '';
+      }
+    }
+    if (listEl) listEl.classList.toggle('opacity-60', isLoading);
+  }
 })();
 </script>
+
+<style is:inline>
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--color-accent, #7c3aed);
+    border-radius: 9999px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>

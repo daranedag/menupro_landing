@@ -13,9 +13,15 @@ export const prerender = false;
       <p class="text-sm text-muted">Guarda tu nombre y el de tu restaurante para continuar.</p>
     </div>
 
-    <div id="settings-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+    <div id="settings-loading" class="flex items-center gap-2 text-sm text-muted">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <span>Cargando datos...</span>
+    </div>
 
-    <form id="settings-form" class="space-y-4 bg-white dark:bg-neutral-900 border border-default rounded-2xl shadow-sm p-6">
+    <div id="settings-content" class="space-y-6 hidden">
+      <div id="settings-alert" class="hidden rounded-lg border border-default bg-[var(--color-bg-soft)] p-4 text-sm"></div>
+
+      <form id="settings-form" class="space-y-4 bg-white dark:bg-neutral-900 border border-default rounded-2xl shadow-sm p-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label class="block text-sm font-medium text-gray-800 dark:text-neutral-100">
           Tu nombre
@@ -81,6 +87,7 @@ export const prerender = false;
       </div>
       <div id="upgrade-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     </div>
+    </div>
   </section>
 </PrivateLayout>
 
@@ -97,6 +104,9 @@ export const prerender = false;
   const currentTierBenefitsEl = document.getElementById('current-tier-benefits');
   const upgradeCardsEl = document.getElementById('upgrade-cards');
   const restaurantsLimitEl = document.getElementById('restaurants-limit');
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  const loadingEl = document.getElementById('settings-loading');
+  const contentEl = document.getElementById('settings-content');
 
   const settingsRawBase = (root && root instanceof HTMLElement && root.dataset?.apiBase)
     ? root.dataset.apiBase
@@ -200,6 +210,15 @@ export const prerender = false;
       return;
     }
 
+    const restaurantsUsed = (localStorage.getItem('restaurant_id') || storedRestaurantId) ? 1 : 0;
+    const maxRestaurantsAllowed = Number.isFinite(tierLimits.maxRestaurants) ? tierLimits.maxRestaurants : Infinity;
+    if (maxRestaurantsAllowed !== Infinity && restaurantsUsed >= maxRestaurantsAllowed) {
+      showAlert('Alcanzaste el límite de restaurantes para tu plan.');
+      statusEl.textContent = 'Límite de restaurantes alcanzado.';
+      statusEl.classList.add('text-red-500');
+      return;
+    }
+
     try {
       statusEl.textContent = 'Guardando restaurante...';
 
@@ -284,6 +303,16 @@ export const prerender = false;
     }
   }
 
+  function parseLimitNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : undefined;
+  }
+
+  function normalizeLimitForTier(value, tierKey) {
+    if (normalizeTierKey(tierKey) === 'pro_plus' && value === 0) return Infinity;
+    return value;
+  }
+
   function deriveLimits(tierKey) {
     const tier = tierInfo[tierKey] || tierInfo.free;
     const features = tier?.benefits || [];
@@ -296,13 +325,61 @@ export const prerender = false;
     };
   }
 
+  function extractLimitsFromTier(tier, tierKey) {
+    const fallback = deriveLimits(tierKey);
+    if (!tier || typeof tier !== 'object') return fallback;
+
+    const directMenus = normalizeLimitForTier(parseLimitNumber(tier.max_menus ?? tier.menu_limit ?? tier.maxMenus ?? tier.limit_menus), tierKey);
+    const directRestaurants = normalizeLimitForTier(parseLimitNumber(tier.max_restaurants ?? tier.restaurant_limit ?? tier.maxRestaurants ?? tier.limit_restaurants), tierKey);
+    const nestedMenus = normalizeLimitForTier(parseLimitNumber(tier?.limits?.menus), tierKey);
+    const nestedRestaurants = normalizeLimitForTier(parseLimitNumber(tier?.limits?.restaurants ?? tier?.limits?.restaurants_count), tierKey);
+
+    let featureMenus;
+    let featureRestaurants;
+    const features = Array.isArray(tier.features) ? tier.features : [];
+    for (const feat of features) {
+      const key = (feat?.feature_key || feat?.key || '').toString().toLowerCase();
+      const val = feat?.value ?? feat?.feature_value ?? feat?.limit ?? feat?.max;
+      const parsedVal = normalizeLimitForTier(parseLimitNumber(val), tierKey);
+      if (!featureMenus && (key.includes('menu') || key.includes('carta'))) featureMenus = parsedVal;
+      if (!featureRestaurants && (key.includes('restaurant') || key.includes('restaurante'))) featureRestaurants = parsedVal;
+
+      const name = (feat?.feature_name || feat?.name || '').toString().toLowerCase();
+      if (!featureRestaurants && (name.includes('restaurant') || name.includes('restaurante'))) {
+        const match = name.match(/(\d+)/);
+        featureRestaurants = parsedVal ?? normalizeLimitForTier(parseLimitNumber(match?.[1]), tierKey);
+      }
+      if (!featureMenus && (name.includes('carta') || name.includes('menu'))) {
+        const match = name.match(/(\d+)/);
+        featureMenus = parsedVal ?? normalizeLimitForTier(parseLimitNumber(match?.[1]), tierKey);
+      }
+    }
+
+    return {
+      maxMenus: directMenus ?? nestedMenus ?? featureMenus ?? normalizeLimitForTier(fallback.maxMenus, tierKey),
+      maxRestaurants: directRestaurants ?? nestedRestaurants ?? featureRestaurants ?? normalizeLimitForTier(fallback.maxRestaurants, tierKey),
+    };
+  }
+
   function renderLimits(limits) {
-    const usedRestaurants = storedRestaurantId ? 1 : 0;
+    const currentStoredRestaurantId = localStorage.getItem('restaurant_id') || storedRestaurantId;
+    const usedRestaurants = currentStoredRestaurantId ? 1 : 0;
     const maxRestaurants = limits.maxRestaurants;
+
     if (restaurantsLimitEl) {
       restaurantsLimitEl.textContent = maxRestaurants === Infinity
         ? `${usedRestaurants} / ilimitado`
         : `${usedRestaurants} / ${maxRestaurants}`;
+    }
+
+    const capped = Number.isFinite(maxRestaurants) && usedRestaurants >= maxRestaurants;
+    if (submitBtn && !inputsLocked) {
+      submitBtn.toggleAttribute('disabled', capped);
+    }
+
+    if (capped && statusEl) {
+      statusEl.textContent = 'Alcanzaste el límite de restaurantes para tu plan.';
+      statusEl.classList.add('text-red-500');
     }
   }
 
@@ -356,6 +433,8 @@ export const prerender = false;
   }
 
   async function loadTiers() {
+    setLoading(true);
+    let hydrated = false;
     try {
       const headers = supabaseToken ? { Authorization: `Bearer ${supabaseToken}` } : {};
       const res = await fetch(`${apiBase}/subscriptions/tiers`, { headers });
@@ -368,12 +447,7 @@ export const prerender = false;
             ? payload
             : [];
 
-      if (!Array.isArray(list) || !list.length) {
-        tierInfo = { ...defaultTierInfo };
-        renderCurrentTier(storedUserTier);
-        renderUpgradeCards(storedUserTier);
-        return;
-      }
+      if (!Array.isArray(list) || !list.length) throw new Error('No tiers');
 
       const map = {};
       list.forEach((item) => {
@@ -394,22 +468,45 @@ export const prerender = false;
         };
       });
 
+      const tierKey = normalizeTierKey(storedUserTier || 'free');
+      const currentTier = list.find((item) => normalizeTierKey(item?.tier_name || item?.slug || item?.id || item?.name || '') === tierKey);
+
       tierInfo = { ...defaultTierInfo, ...map };
+      tierLimits = extractLimitsFromTier(currentTier, tierKey);
+      localStorage.setItem('tier_limits', JSON.stringify(tierLimits));
+
+      renderCurrentTier(tierKey);
+      renderUpgradeCards(tierKey);
+      renderLimits(tierLimits);
+      hydrated = true;
     } catch (err) {
       tierInfo = { ...defaultTierInfo };
     } finally {
-      const limits = deriveLimits(storedUserTier);
-      tierLimits = limits;
-      localStorage.setItem('tier_limits', JSON.stringify(limits));
-      const tierKey = normalizeTierKey(storedUserTier || 'free');
-      renderCurrentTier(tierKey);
-      renderUpgradeCards(tierKey);
-      renderLimits(limits);
+      if (!hydrated) {
+        const tierKey = normalizeTierKey(storedUserTier || 'free');
+        const limits = deriveLimits(tierKey);
+        tierLimits = limits;
+        localStorage.setItem('tier_limits', JSON.stringify(limits));
+        renderCurrentTier(tierKey);
+        renderUpgradeCards(tierKey);
+        renderLimits(limits);
+      }
+      setLoading(false);
     }
   }
 
   loadTiers();
   renderLimits(tierLimits);
+
+  function setLoading(isLoading) {
+    if (loadingEl) loadingEl.classList.toggle('hidden', !isLoading);
+    if (contentEl) contentEl.classList.toggle('hidden', isLoading);
+    if (submitBtn) {
+      submitBtn.toggleAttribute('aria-disabled', isLoading);
+      submitBtn.classList.toggle('pointer-events-none', isLoading);
+      submitBtn.classList.toggle('opacity-60', isLoading);
+    }
+  }
 
   function formatPrice(value) {
     if (value === 0) return 'Gratis';
@@ -420,3 +517,19 @@ export const prerender = false;
   }
 })();
 </script>
+
+<style is:inline>
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--color-accent, #7c3aed);
+    border-radius: 9999px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>

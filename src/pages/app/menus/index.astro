@@ -58,6 +58,7 @@ export const prerender = false;
   const userTier = normalizeTierKey(localStorage.getItem('user_tier') || 'free');
   let cachedTierLimits = {};
   let maxMenus = Infinity;
+  let draggingSectionEl = null;
 
   if (!token) {
     showAlert('No hay sesión activa. Inicia sesión para continuar.');
@@ -99,34 +100,18 @@ export const prerender = false;
     if (normalized === 'pro') return 'Pro';
     return 'Free';
   }
-
-  function parseLimitNumber(value) {
-    const num = Number(value);
-    return Number.isFinite(num) ? num : undefined;
-  }
-
-  function parseCachedLimit(value) {
-    if (value === null || value === undefined) return undefined;
-    if (value === 'Infinity' || value === 'infinity') return undefined;
-    if (value === Infinity || value === -Infinity) return undefined;
-    const num = Number(value);
-    if (!Number.isFinite(num)) return undefined;
-    return num;
-  }
-
-  function normalizeLimitForTier(value, tierKey) {
-    if (normalizeTierKey(tierKey) === 'pro_plus' && value === 0) return Infinity;
-    return value;
-  }
-
-  function serializeLimitsForStorage(obj) {
-    return {
-      maxMenus: Number.isFinite(obj?.maxMenus) ? obj.maxMenus : null,
-      maxRestaurants: Number.isFinite(obj?.maxRestaurants) ? obj.maxRestaurants : null,
-    };
-  }
-
-  function deriveMaxMenus(tierKey) {
+          const res = await fetch(`${apiBase}/menus/${menuId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ description: descriptionRaw.trim() }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.message || 'No se pudo actualizar la descripción');
+          setStatus('Descripción actualizada.');
+          loadMenus();
     const caps = getTierCaps(tierKey);
     const cap = caps.maxMenus;
     if (cap === 0) return Infinity;
@@ -151,7 +136,7 @@ export const prerender = false;
     if (Number.isFinite(caps.maxMenus) || caps.maxMenus === 0) return caps.maxMenus;
     return undefined;
   }
-
+                                                                                                                                                                                        
   async function hydrateTierLimits() {
     // 1) Usa cache previa si existe
     try {
@@ -287,37 +272,7 @@ export const prerender = false;
         0
       );
 
-      const sectionsList = sections.map((sec) => {
-        const dishes = Array.isArray(sec?.items) ? sec.items : [];
-        return `
-          <div class="rounded-lg border border-default p-3 bg-[var(--color-bg-soft)] space-y-2">
-            <div class="flex items-start justify-between gap-2 text-sm font-semibold">
-              <div>
-                <span>${sec?.name || 'Sección'}</span>
-                <p class="text-xs text-muted">${sec?.description || 'Sin descripción'}</p>
-              </div>
-              <span class="text-muted">${dishes.length} platos</span>
-            </div>
-            <ul class="text-sm text-muted space-y-1">
-              ${dishes.length
-                ? dishes.map((d) => {
-                  const priceLabel = d?.price !== undefined && d?.price !== null ? formatPrice(d.price) : 'S/‑';
-                  const dishDescription = d?.description ? `<p class="text-xs text-muted">${d.description}</p>` : '';
-                  return `
-                    <li class="rounded border border-default px-3 py-2 bg-white/40 dark:bg-neutral-950/40">
-                      <div class="flex items-center justify-between gap-2 text-sm">
-                        <span class="font-medium">${d?.name || 'Plato'}</span>
-                        <span class="text-muted">${priceLabel}</span>
-                      </div>
-                      ${dishDescription}
-                    </li>
-                  `;
-                }).join('')
-                : '<li class="text-xs text-muted">Sin platos aún.</li>'}
-            </ul>
-          </div>
-        `;
-      }).join('');
+      const sectionsList = sections.map(buildSectionHtml).join('');
 
       const sectionOptions = sections.map((sec) => `<option value="${sec?.id}">${sec?.name || 'Sección'}</option>`).join('');
 
@@ -341,23 +296,35 @@ export const prerender = false;
                 </div>
                 <div class="space-y-2">
                   <h2 class="text-xl font-semibold">${menu?.name || 'Sin nombre'}</h2>
-                  <form class="title-form flex flex-wrap items-center gap-2" data-menu-id="${menu?.id}">
-                    <input
-                      type="text"
-                      name="menu_title"
-                      value="${menu?.name || ''}"
-                      class="w-full md:w-64 rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-950 text-sm"
-                      placeholder="Nuevo título"
-                      required
-                    />
-                    <button type="submit" class="btn-primary px-3 py-2 rounded-lg text-sm font-semibold">Guardar título</button>
-                  </form>
+                  <p class="text-sm text-muted italic">${menu?.description || 'Sin descripción'}</p>
+                  <div class="flex flex-col md:flex-row items-start gap-3 w-full">
+                    <form class="title-form flex flex-col md:flex-row flex-1 items-start gap-2" data-menu-id="${menu?.id}">
+                      <input
+                        type="text"
+                        name="menu_title"
+                        value="${menu?.name || ''}"
+                        class="w-full md:w-64 rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-950 text-sm"
+                        placeholder="Nuevo título"
+                        required
+                      />
+                      <button type="submit" class="btn-primary px-3 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+                    </form>
+                    <form class="description-form flex flex-col md:flex-row flex-1 items-start gap-2" data-menu-id="${menu?.id}">
+                      <textarea
+                        id="menu-description-${menu?.id}"
+                        name="menu_description"
+                        rows="2"
+                        class="w-full rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-950 text-sm min-h-[42px]"
+                        placeholder="Añade una descripción para esta carta"
+                        aria-label="Descripción de la carta"
+                      >${menu?.description || ''}</textarea>
+                      <button type="submit" class="btn-primary px-3 py-2 rounded-lg text-sm font-semibold">Guardar</button>
+                    </form>
+                  </div>
                 </div>
-                <p class="text-sm text-muted">${menu?.description || 'Sin descripción'}</p>
                 <div class="flex items-center gap-3 text-xs text-muted">
-                  <span>${sections.length} secciones</span>
-                  <span>${totalDishes} platos</span>
-                  <span>Vistas: ${views}</span>
+                  <span data-sections-count="${menu?.id}">${sections.length} secciones</span>
+                  <span data-dishes-count="${menu?.id}">${totalDishes} platos</span>
                 </div>
               </div>
               <div class="flex flex-col items-end gap-2 text-sm">
@@ -366,37 +333,42 @@ export const prerender = false;
                   <button type="button" class="publish-toggle-btn inline-flex items-center gap-2 rounded-lg border border-default px-3 py-2 text-sm font-semibold ${isPublished ? 'bg-white dark:bg-neutral-950' : 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'}" data-menu-id="${menu?.id}" data-published="${isPublished}">
                     ${isPublished ? 'Despublicar' : 'Publicar'}
                   </button>
-                  <button type="button" class="generate-qr-btn inline-flex items-center gap-2 rounded-lg border border-default px-3 py-2 text-sm font-semibold" data-menu-id="${menu?.id}" data-slug="${slug}" data-restaurant-slug="${restaurantSlugForMenu}">
+                  <button
+                    type="button"
+                    class="generate-qr-btn inline-flex items-center gap-2 rounded-lg border border-default px-3 py-2 text-sm font-semibold"
+                    data-menu-id="${menu?.id}"
+                    data-slug="${slug}"
+                    data-restaurant-slug="${restaurantSlugForMenu}"
+                    data-tooltip="Genera el QR y descárgalo para usarlo en sala o impresión."
+                  >
                     Generar QR
                   </button>
                 </div>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 flex-wrap">
-              <div class="rounded-lg border border-default bg-[var(--color-bg-soft)] px-4 py-3">
-                <p class="text-xs text-muted">Vistas</p>
-                <p class="text-sm font-semibold">${views}</p>
-              </div>
-              <div class="rounded-lg border border-default bg-[var(--color-bg-soft)] px-4 py-3">
-                <p class="text-xs text-muted">Slug</p>
-                <p class="text-sm font-semibold">${slug || '—'}</p>
+                <div class="flex items-start gap-3 flex-wrap justify-end w-full">
+                  <div class="rounded-lg border border-default bg-[var(--color-bg-soft)] px-4 py-3">
+                    <p class="text-xs text-muted">Vistas</p>
+                    <p class="text-sm font-semibold">${views}</p>
+                  </div>
+                  <div class="rounded-lg border border-default bg-[var(--color-bg-soft)] px-4 py-3">
+                    <p class="text-xs text-muted">Slug</p>
+                    <p class="text-sm font-semibold">${slug || '—'}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="flex items-center gap-3">
               <img data-qr-img="${menu?.id}" src="${qrUrl || ''}" alt="QR de ${menu?.name || 'carta'}" class="h-24 w-24 border border-default rounded ${qrUrl ? '' : 'hidden'}" />
-              <div class="text-xs text-muted">Genera el QR y descárgalo para usarlo en sala o impresión.</div>
             </div>
           </div>
 
-          <div class="space-y-3">
+          <div class="space-y-3" data-sections-container="${menu?.id}">
             <h3 class="text-sm font-semibold">Secciones</h3>
             ${sectionsList || '<p class="text-sm text-muted">Sin secciones aún.</p>'}
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <form class="section-form space-y-2 rounded-lg border border-default p-3 bg-[var(--color-bg-soft)]" data-menu-id="${menu?.id}">
+            <form class="section-form space-y-2 rounded-lg border border-default p-3 bg-[var(--color-bg-soft)]" data-menu-id="${menu?.id}" data-next-order="${sections.length}">
               <p class="text-sm font-semibold">Crear sección</p>
               <input type="text" name="section_name" required class="w-full rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-950 text-sm" placeholder="Ej: Entradas" />
               <textarea name="section_description" rows="2" class="w-full rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-950 text-sm" placeholder="Descripción (opcional)"></textarea>
@@ -426,6 +398,8 @@ export const prerender = false;
     attachPublishHandlers();
     attachQrHandlers();
     attachTitleFormHandlers();
+    attachDescriptionFormHandlers();
+    attachSectionDragAndDrop();
   }
 
   function attachSectionFormHandlers() {
@@ -435,12 +409,14 @@ export const prerender = false;
         e.preventDefault();
         const target = e.currentTarget;
         const menuId = target?.dataset?.menuId;
+        const nextOrderRaw = target?.dataset?.nextOrder;
         const name = target?.section_name?.value?.trim();
         const description = target?.section_description?.value?.trim();
         if (!menuId || !name) return;
+        const orderIndex = Number.isFinite(Number(nextOrderRaw)) ? Number(nextOrderRaw) : 0;
         setStatus('Creando sección...');
         try {
-          const payload = description ? { name, description } : { name };
+          const payload = description ? { name, description, order_index: orderIndex } : { name, order_index: orderIndex };
           const res = await fetch(`${apiBase}/menus/${menuId}/sections`, {
             method: 'POST',
             headers: {
@@ -492,6 +468,174 @@ export const prerender = false;
         }
       });
     });
+  }
+
+  function attachDescriptionFormHandlers() {
+    const forms = listEl?.querySelectorAll('.description-form');
+    forms?.forEach((form) => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const target = e.currentTarget;
+        const menuId = target?.dataset?.menuId;
+        const descriptionRaw = target?.menu_description?.value ?? '';
+        if (!menuId) return;
+        setStatus('Actualizando descripción...');
+        const submitBtn = target.querySelector('button[type="submit"]');
+        try {
+          submitBtn?.setAttribute('disabled', 'true');
+          const res = await fetch(`${apiBase}/menus/${menuId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ description: descriptionRaw.trim() }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.message || 'No se pudo actualizar la descripción');
+          setStatus('Descripción actualizada.');
+          loadMenus();
+        } catch (err) {
+          setStatus(err instanceof Error ? err.message : 'Error al actualizar la descripción', true);
+        } finally {
+          submitBtn?.removeAttribute('disabled');
+        }
+      });
+    });
+  }
+
+  function attachSectionDragAndDrop(containerOverride) {
+    const containers = containerOverride ? [containerOverride] : listEl?.querySelectorAll('[data-sections-container]');
+    containers?.forEach((container) => {
+      container.addEventListener('dragover', handleSectionDragOver);
+      container.addEventListener('drop', handleSectionDrop);
+      const cards = container.querySelectorAll('[data-section-id]');
+      cards.forEach((card) => {
+        card.setAttribute('draggable', 'true');
+        card.addEventListener('dragstart', handleSectionDragStart);
+        card.addEventListener('dragend', handleSectionDragEnd);
+      });
+    });
+  }
+
+  function handleSectionDragStart(e) {
+    const target = e.currentTarget;
+    draggingSectionEl = target;
+    target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleSectionDragEnd() {
+    if (draggingSectionEl) draggingSectionEl.classList.remove('dragging');
+    draggingSectionEl = null;
+  }
+
+  function handleSectionDragOver(e) {
+    e.preventDefault();
+    if (!draggingSectionEl) return;
+    const container = e.currentTarget;
+    const afterEl = getSectionAfterElement(container, e.clientY);
+    if (!afterEl) {
+      container.appendChild(draggingSectionEl);
+    } else {
+      container.insertBefore(draggingSectionEl, afterEl);
+    }
+  }
+
+  async function handleSectionDrop(e) {
+    e.preventDefault();
+    const container = e.currentTarget;
+    const menuId = container?.dataset?.sectionsContainer;
+    if (!menuId) return;
+    const ordered = Array.from(container.querySelectorAll('[data-section-id]')).map((el, idx) => ({
+      id: el?.dataset?.sectionId,
+      order_index: idx,
+    })).filter((entry) => entry.id);
+    syncNextOrderForMenu(menuId, ordered.length);
+    updateSectionsCount(menuId, ordered.length);
+    await persistSectionOrder(menuId, ordered);
+  }
+
+  function getSectionAfterElement(container, y) {
+    const elements = [...container.querySelectorAll('[data-section-id]:not(.dragging)')];
+    return elements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
+  async function persistSectionOrder(menuId, ordered) {
+    if (!Array.isArray(ordered) || !ordered.length) return;
+    setStatus('Actualizando orden de secciones...');
+    try {
+      await Promise.all(ordered.map(({ id, order_index }) => fetch(`${apiBase}/menus/${menuId}/sections/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ order_index }),
+      })));
+      setStatus('Orden actualizado.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'No se pudo reordenar las secciones', true);
+    }
+  }
+
+  function updateSectionsCount(menuId, count) {
+    const countEl = listEl?.querySelector(`[data-sections-count="${menuId}"]`);
+    if (countEl) countEl.textContent = `${count} secciones`;
+  }
+
+  function addSectionToDishSelect(menuId, section) {
+    const select = listEl?.querySelector(`form.dish-form[data-menu-id="${menuId}"] select[name="section_id"]`);
+    if (!select || !section?.id) return;
+    const option = document.createElement('option');
+    option.value = section.id;
+    option.textContent = section?.name || 'Sección';
+    select.appendChild(option);
+  }
+
+  function syncNextOrderForMenu(menuId, count) {
+    const form = listEl?.querySelector(`form.section-form[data-menu-id="${menuId}"]`);
+    if (form) form.dataset.nextOrder = String(count);
+  }
+
+  function buildSectionHtml(sec) {
+    const dishes = Array.isArray(sec?.items) ? sec.items : [];
+    const orderIndex = Number.isFinite(Number(sec?.order_index)) ? Number(sec.order_index) : 0;
+    return `
+      <div class="rounded-lg border border-default p-3 bg-[var(--color-bg-soft)] space-y-2 section-card" data-section-id="${sec?.id}" data-order-index="${orderIndex}" draggable="true">
+        <div class="flex items-start justify-between gap-2 text-sm font-semibold">
+          <div>
+            <span>${sec?.name || 'Sección'}</span>
+            <p class="text-xs text-muted">${sec?.description || 'Sin descripción'}</p>
+          </div>
+          <span class="text-muted">${dishes.length} platos</span>
+        </div>
+        <ul class="text-sm text-muted space-y-1">
+          ${dishes.length
+            ? dishes.map((d) => {
+              const priceLabel = d?.price !== undefined && d?.price !== null ? formatPrice(d.price) : 'S/‑';
+              const dishDescription = d?.description ? `<p class="text-xs text-muted">${d.description}</p>` : '';
+              return `
+                <li class="rounded border border-default px-3 py-2 bg-white/40 dark:bg-neutral-950/40">
+                  <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="font-medium">${d?.name || 'Plato'}</span>
+                    <span class="text-muted">${priceLabel}</span>
+                  </div>
+                  ${dishDescription}
+                </li>
+              `;
+            }).join('')
+            : '<li class="text-xs text-muted">Sin platos aún.</li>'}
+        </ul>
+      </div>
+    `;
   }
 
   function attachDishFormHandlers() {
@@ -549,7 +693,7 @@ export const prerender = false;
     setStatus(shouldPublish ? 'Publicando carta...' : 'Despublicando carta...');
     try {
       buttonEl?.setAttribute('disabled', 'true');
-      const res = await fetch(`${apiBase}/menus/${menuId}`, {
+      const res = await fetch(`${apiBase}/menus/${menuId}/publish`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -666,5 +810,47 @@ export const prerender = false;
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+
+  .generate-qr-btn[data-tooltip] {
+    position: relative;
+    overflow: visible;
+  }
+
+  .generate-qr-btn[data-tooltip]:hover::after,
+  .generate-qr-btn[data-tooltip]:focus-visible::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    max-width: 240px;
+    background: var(--color-bg-soft, #fff);
+    color: inherit;
+    border: 1px solid var(--color-border, rgba(0,0,0,0.1));
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    z-index: 10;
+    white-space: normal;
+  }
+
+  .generate-qr-btn[data-tooltip]:hover::before,
+  .generate-qr-btn[data-tooltip]:focus-visible::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    right: 12px;
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: var(--color-bg-soft, #fff) transparent transparent transparent;
+    z-index: 11;
+    filter: drop-shadow(0 -1px 1px rgba(0,0,0,0.08));
+  }
+
+  .section-card.dragging {
+    opacity: 0.6;
+    border-style: dashed;
   }
 </style>

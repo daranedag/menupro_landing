@@ -1,12 +1,17 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import node from '@astrojs/node';
 
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://menupro.cl',
+  output: 'server',
+  adapter: node({
+    mode: 'standalone'
+  }),
   trailingSlash: 'never', // URLs sin trailing slash para consistencia SEO
   integrations: [
     sitemap({

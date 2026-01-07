@@ -12,11 +12,13 @@
   const sectionsEl = document.getElementById('menu-sections');
   const restaurantNameEl = document.getElementById('menu-restaurant-name');
   const restaurantMetaEl = document.getElementById('menu-restaurant-meta');
-
-  const statusLabels = {
-    published: { text: 'Publicado', class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100' },
-    draft: { text: 'Borrador', class: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-100' },
-  };
+  const restaurantInfoCard = document.getElementById('restaurant-info');
+  const restaurantInfoNameEl = document.getElementById('restaurant-info-name');
+  const restaurantInfoHoursEl = document.getElementById('restaurant-info-hours');
+  const restaurantInfoAddressEl = document.getElementById('restaurant-info-address');
+  const restaurantInfoPhoneEl = document.getElementById('restaurant-info-phone');
+  const baseStatusClasses = 'inline-flex items-center gap-2 text-xs font-semibold rounded-full px-3 py-1';
+  // Status badge is hidden on public menu.
 
   function showError() {
     errorEl?.classList.remove('hidden');
@@ -31,9 +33,9 @@
   }
 
   function formatPrice(value) {
-    if (value === null || value === undefined || Number.isNaN(Number(value))) return 'S/‑';
+    if (value === null || value === undefined || Number.isNaN(Number(value))) return 'CLP -';
     const num = Number(value);
-    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', minimumFractionDigits: 2 }).format(num);
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
   }
 
   function normalizeSections(menu) {
@@ -50,6 +52,17 @@
     if (Array.isArray(section.menu_items)) return section.menu_items;
     if (Array.isArray(section.data)) return section.data;
     return [];
+  }
+
+  function getSchedule(menu) {
+    return (
+      menu?.schedule ||
+      menu?.opening_hours ||
+      menu?.hours ||
+      menu?.working_hours ||
+      menu?.business_hours ||
+      ''
+    );
   }
 
   function renderSections(sections = []) {
@@ -106,10 +119,23 @@
       restaurantNameEl.textContent = menu?.restaurant_name || '';
       const restaurantMeta = [menu?.restaurant_slug, menu?.address, menu?.phone].filter(Boolean).join(' • ');
       restaurantMetaEl.textContent = restaurantMeta;
-      const statusKey = menu?.is_published ? 'published' : 'draft';
-      const statusCfg = statusLabels[statusKey];
-      statusEl.textContent = statusCfg?.text || '';
-      statusEl.className = `inline-flex items-center gap-2 text-xs font-semibold rounded-full px-3 py-1 ${statusCfg?.class || ''}`;
+      statusEl.textContent = '';
+      statusEl.className = 'hidden';
+
+      const hours = getSchedule(menu);
+      const address = menu?.address || '';
+      const phone = menu?.phone || '';
+      const restaurantDisplayName = menu?.restaurant_name || menu?.restaurant_slug || '';
+      restaurantInfoNameEl.textContent = restaurantDisplayName || 'Restaurante';
+      restaurantInfoHoursEl.textContent = hours || '';
+      restaurantInfoAddressEl.textContent = address;
+      restaurantInfoPhoneEl.textContent = phone;
+      const hasInfo = [restaurantDisplayName, hours, address, phone].some(Boolean);
+      if (hasInfo) {
+        restaurantInfoCard?.classList.remove('hidden');
+      } else {
+        restaurantInfoCard?.classList.add('hidden');
+      }
       renderSections(sections);
       showContent();
     } catch (err) {

@@ -1,13 +1,16 @@
 ---
 import "../../../styles/global.css";
 
-const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000").toString();
+const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:3000   ").toString();
 export const prerender = false;
 const { restaurantSlug, menuSlug } = Astro.params;
 const apiBaseNormalized = apiBaseUrl.trim() ? apiBaseUrl.replace(/\/$/, "") : "";
 const publicMenuUrl = apiBaseNormalized
 	? `${apiBaseNormalized}/menus/public/${restaurantSlug}/${menuSlug}`
 	: `/menus/public/${restaurantSlug}/${menuSlug}`;
+const publicRestaurantUrl = apiBaseNormalized
+	? `${apiBaseNormalized}/restaurants/public/${restaurantSlug}`
+	: `/restaurants/public/${restaurantSlug}`;
 ---
 
 <html lang="es">
@@ -18,33 +21,44 @@ const publicMenuUrl = apiBaseNormalized
 		<link rel="icon" type="image/png" href="/favicon.png" />
 	</head>
 	<body class="bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
-		<main class="min-h-screen flex items-center justify-center p-6" data-public-url={publicMenuUrl}>
-			<div class="w-full max-w-3xl space-y-6">
-				<div class="flex items-center gap-2 text-sm text-muted" id="menu-loading">
+		<div class="relative min-h-screen overflow-hidden">
+				<div id="watermark" class="pointer-events-none absolute inset-0 hidden select-none z-0" aria-hidden="true">
+					<div class="absolute inset-0 opacity-70" style="background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0) 0, rgba(0,0,0,0) 140px, rgba(0,0,0,0.03) 140px, rgba(0,0,0,0.03) 280px);"></div>
+					<div class="absolute inset-0 flex items-center justify-center">
+						<div class="grid grid-cols-3 md:grid-cols-4 gap-6 md:gap-10 opacity-90">
+							{Array.from({ length: 16 }).map(() => (
+								<p class="text-2xl md:text-4xl font-black uppercase tracking-[0.16em] text-white rotate-[-8deg] drop-shadow-[0_12px_18px_rgba(0,0,0,0.32)]" aria-hidden="true">MenuPro · Gratis</p>
+							))}
+						</div>
+					</div>
+				</div>
+			<main class="relative z-10 min-h-screen flex items-center justify-center p-6" data-public-url={publicMenuUrl} data-restaurant-url={publicRestaurantUrl}>
+				<div class="w-full max-w-3xl space-y-6">
+					<div class="flex items-center gap-2 text-sm text-muted" id="menu-loading">
 					<span class="loading-spinner" aria-hidden="true"></span>
 					<span>Cargando menú...</span>
 				</div>
 
 				<div id="menu-content" class="hidden space-y-4">
-					<header class="space-y-2">
-						<p id="menu-status" class="hidden"></p>
-						<h1 id="menu-title" class="text-2xl font-semibold">Menú</h1>
-						<p id="menu-restaurant-name" class="text-sm font-semibold text-muted"></p>
-						<p id="menu-restaurant-meta" class="text-xs text-muted"></p>
-						<p id="menu-description" class="text-sm text-muted"></p>
-						<section id="restaurant-info" class="hidden rounded-lg border border-default p-3 bg-[var(--color-bg-soft)] space-y-1">
-							<div class="flex items-center justify-between gap-3">
-								<div>
-									<p class="text-xs uppercase tracking-wide text-muted">Restaurante</p>
-									<p id="restaurant-info-name" class="text-base font-semibold">&nbsp;</p>
+					<header class="space-y-3">
+						<div class="flex items-start justify-between gap-3">
+							<div class="flex items-start gap-3">
+								<div id="restaurant-logo-wrap" class="hidden h-12 w-12 shrink-0 overflow-hidden rounded-full border border-default bg-[var(--color-bg-soft)]">
+									<img id="restaurant-logo" alt="Logo del restaurante" class="h-full w-full object-cover" />
 								</div>
-								<p id="restaurant-info-hours" class="text-xs text-muted text-right"></p>
+								<div class="space-y-1">
+									<p id="menu-status" class="hidden"></p>
+									<h1 id="menu-restaurant-name" class="text-2xl font-semibold"></h1>
+									<p id="menu-title" class="text-sm font-semibold text-muted"></p>
+									<p id="menu-restaurant-meta" class="text-xs text-muted"></p>
+								</div>
 							</div>
-							<div class="text-xs text-muted space-y-1">
-								<p id="restaurant-info-address"></p>
-								<p id="restaurant-info-phone"></p>
+							<div id="restaurant-actions" class="flex flex-col items-end gap-2 text-xs text-muted hidden">
+								<div id="restaurant-links" class="flex flex-wrap items-center justify-end gap-2"></div>
+								<div id="restaurant-phone" class="hidden text-right"></div>
 							</div>
-						</section>
+						</div>
+						<p id="menu-description" class="text-sm text-muted"></p>
 					</header>
 					<div id="menu-sections" class="space-y-4"></div>
 				</div>
@@ -56,6 +70,7 @@ const publicMenuUrl = apiBaseNormalized
 		<script type="module">
 			const root = document.querySelector('[data-public-url]');
 			const publicUrl = root?.dataset?.publicUrl || "${publicMenuUrl}";
+			const restaurantUrl = root?.dataset?.restaurantUrl || "${publicRestaurantUrl}";
 			const loadingEl = document.getElementById('menu-loading');
 			const contentEl = document.getElementById('menu-content');
 			const errorEl = document.getElementById('menu-error');
@@ -65,11 +80,12 @@ const publicMenuUrl = apiBaseNormalized
 			const sectionsEl = document.getElementById('menu-sections');
 			const restaurantNameEl = document.getElementById('menu-restaurant-name');
 			const restaurantMetaEl = document.getElementById('menu-restaurant-meta');
-			const restaurantInfoCard = document.getElementById('restaurant-info');
-			const restaurantInfoNameEl = document.getElementById('restaurant-info-name');
-			const restaurantInfoHoursEl = document.getElementById('restaurant-info-hours');
-			const restaurantInfoAddressEl = document.getElementById('restaurant-info-address');
-			const restaurantInfoPhoneEl = document.getElementById('restaurant-info-phone');
+			const restaurantLogoWrapEl = document.getElementById('restaurant-logo-wrap');
+			const restaurantLogoEl = document.getElementById('restaurant-logo');
+			const restaurantActionsEl = document.getElementById('restaurant-actions');
+			const restaurantLinksEl = document.getElementById('restaurant-links');
+			const restaurantPhoneEl = document.getElementById('restaurant-phone');
+			const watermarkEl = document.getElementById('watermark');
 
 			function showError() {
 				errorEl?.classList.remove('hidden');
@@ -105,15 +121,19 @@ const publicMenuUrl = apiBaseNormalized
 				return [];
 			}
 
-			function getSchedule(menu) {
-				return (
-					menu?.schedule ||
-					menu?.opening_hours ||
-					menu?.hours ||
-					menu?.working_hours ||
-					menu?.business_hours ||
-					''
-				);
+			function normalizeUrl(value) {
+				if (!value || typeof value !== 'string') return '';
+				const trimmed = value.trim();
+				if (!trimmed) return '';
+				if (/^https?:\/\//i.test(trimmed)) return trimmed;
+				return `https://${trimmed}`;
+			}
+
+			function normalizeTierKey(key) {
+				if (!key || typeof key !== 'string') return 'free';
+				const cleaned = key.toLowerCase().trim();
+				if (cleaned.includes('free') || cleaned.includes('gratis')) return 'free';
+				return cleaned || 'free';
 			}
 
 			function renderSections(sections = []) {
@@ -152,6 +172,77 @@ const publicMenuUrl = apiBaseNormalized
 				sectionsEl.innerHTML = html;
 			}
 
+			function renderRestaurant(restaurant = {}, menu = {}) {
+				const displayName = restaurant?.name || menu?.restaurant_name || menu?.restaurant_slug || '';
+				restaurantNameEl.textContent = displayName;
+				const cityCountry = restaurant?.city && restaurant?.country
+					? `${restaurant.city}, ${restaurant.country}`
+					: restaurant?.city || restaurant?.country || '';
+				const address = restaurant?.address || menu?.address;
+				const metaParts = [address, cityCountry].filter(Boolean);
+				if (metaParts.length) {
+					restaurantMetaEl.innerHTML = `
+						<span class="inline-flex items-center gap-1">
+							<svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"></path>
+								<circle cx="12" cy="11" r="2"></circle>
+							</svg>
+							<span>${metaParts.join(' • ')}</span>
+						</span>
+					`;
+					restaurantMetaEl.classList.remove('hidden');
+				} else {
+					restaurantMetaEl.textContent = '';
+					restaurantMetaEl.classList.add('hidden');
+				}
+
+				const logo = restaurant?.logo_url;
+				if (logo) {
+					restaurantLogoEl.src = logo;
+					restaurantLogoWrapEl?.classList.remove('hidden');
+				} else {
+					restaurantLogoEl.removeAttribute('src');
+					restaurantLogoWrapEl?.classList.add('hidden');
+				}
+
+				const links = [];
+				const websiteUrl = normalizeUrl(restaurant?.website);
+				const instagramUrl = normalizeUrl(restaurant?.instagram);
+				if (websiteUrl) {
+					links.push(`<a class="inline-flex items-center gap-1 rounded-full border border-default bg-[var(--color-bg-soft)] px-2 py-1" href="${websiteUrl}" target="_blank" rel="noreferrer noopener"><svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9z"></path></svg> Sitio web</a>`);
+				}
+				if (instagramUrl) {
+					links.push(`<a class="inline-flex items-center gap-1 rounded-full border border-default bg-[var(--color-bg-soft)] px-2 py-1" href="${instagramUrl}" target="_blank" rel="noreferrer noopener"><svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="4"></rect><circle cx="12" cy="12" r="4"></circle><path d="M16.5 7.5h.01"></path></svg> Instagram</a>`);
+				}
+				restaurantLinksEl.innerHTML = links.join('');
+				restaurantLinksEl.classList.toggle('hidden', links.length === 0);
+
+				const phone = restaurant?.phone || menu?.phone;
+				if (phone) {
+					restaurantPhoneEl.innerHTML = `
+						<a class="inline-flex items-center gap-1" href="tel:${phone}">
+							<svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.86 19.86 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+							</svg>
+							<span>${phone}</span>
+						</a>
+					`;
+					restaurantPhoneEl.classList.remove('hidden');
+				} else {
+					restaurantPhoneEl.classList.add('hidden');
+					restaurantPhoneEl.textContent = '';
+				}
+
+				const hasActions = links.length > 0 || Boolean(restaurant?.phone || menu?.phone);
+				restaurantActionsEl.classList.toggle('hidden', !hasActions);
+			}
+
+			function toggleWatermark(_menu = {}, restaurant = {}) {
+				const tierKey = normalizeTierKey(restaurant?.tier_name);
+				const isFree = tierKey === 'free';
+				watermarkEl?.classList.toggle('hidden', !isFree);
+			}
+
 			async function loadPublicMenu() {
 				if (!publicUrl) {
 					console.error('[public menu] missing publicUrl');
@@ -159,35 +250,37 @@ const publicMenuUrl = apiBaseNormalized
 					return;
 				}
 				try {
-					console.debug('[public menu] fetch', publicUrl);
-					const res = await fetch(publicUrl);
-					const data = await res.json().catch(() => ({}));
-					if (!res.ok) throw new Error(data?.message || 'No se pudo cargar el menú público');
-					const menu = data?.data || data?.menu || data;
+					const [menuRes, restaurantRes] = await Promise.all([
+						fetch(publicUrl),
+						restaurantUrl ? fetch(restaurantUrl).catch((err) => {
+							console.warn('[public restaurant] request failed', err);
+							return null;
+						}) : Promise.resolve(null),
+					]);
+
+					const menuJson = await menuRes.json().catch(() => ({}));
+					if (!menuRes.ok) throw new Error(menuJson?.message || 'No se pudo cargar el menú público');
+					const menu = menuJson?.data || menuJson?.menu || menuJson;
+
+					let restaurant = {};
+					if (restaurantRes) {
+						const restaurantJson = await restaurantRes.json().catch(() => ({}));
+						if (restaurantRes.ok) {
+							restaurant = restaurantJson?.data || restaurantJson;
+						} else {
+							console.warn('[public restaurant] response not ok', restaurantJson);
+						}
+					}
+
 					const sections = normalizeSections(menu);
-					titleEl.textContent = menu?.menu_name || menu?.name || 'Menú';
+					titleEl.textContent = menu?.menu_name || menu?.name || '';
 					descEl.textContent = menu?.description || '';
-					restaurantNameEl.textContent = menu?.restaurant_name || '';
-					const restaurantMeta = [menu?.restaurant_slug, menu?.address, menu?.phone].filter(Boolean).join(' • ');
-					restaurantMetaEl.textContent = restaurantMeta;
 					statusEl.textContent = '';
 					statusEl.className = 'hidden';
 
-					const hours = getSchedule(menu);
-					const address = menu?.address || '';
-					const phone = menu?.phone || '';
-					const restaurantDisplayName = menu?.restaurant_name || menu?.restaurant_slug || '';
-					restaurantInfoNameEl.textContent = restaurantDisplayName || 'Restaurante';
-					restaurantInfoHoursEl.textContent = hours || '';
-					restaurantInfoAddressEl.textContent = address;
-					restaurantInfoPhoneEl.textContent = phone;
-					const hasInfo = [restaurantDisplayName, hours, address, phone].some(Boolean);
-					if (hasInfo) {
-						restaurantInfoCard?.classList.remove('hidden');
-					} else {
-						restaurantInfoCard?.classList.add('hidden');
-					}
+					renderRestaurant(restaurant, menu);
 					renderSections(sections);
+					toggleWatermark(menu, restaurant);
 					showContent();
 				} catch (err) {
 					console.error('[public menu] error', err);
